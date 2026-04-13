@@ -28,12 +28,14 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-## User Roles & Credentials (Seed Data)
+## User Roles & Credentials (Auto-seeded on startup)
 
-- **Doctor**: doctor@royal.com / doctor123
-- **Patient**: patient@royal.com / patient123
-- **Admin**: admin@royal.com / admin123
-- **Receptionist**: (create via admin team management → assign role "receptionist")
+- **Admin**: admin@royal.com / Admin@2024
+- **Doctor**: doctor@royal.com / Doctor@2024
+- **Receptionist**: reception@royal.com / Reception@2024
+- **Patient**: Register via /register page
+
+Auto-seed runs on every server start (`seed.ts`). Creates default admin/doctor/receptionist accounts if they don't exist yet. Works in both dev and production environments.
 
 ## Features
 
@@ -71,8 +73,9 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 
 ### Public Routes
 - `/` — Landing page
-- `/about` — About Us
 - `/services` — Services listing
+- `/news` — News & Offers (from announcements)
+- `/about` — About Us
 - `/reviews` — Patient reviews
 - `/contact` — Contact information
 - `/login` — Login form
