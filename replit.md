@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 3 user roles (patient, doctor, admin), appointment booking, medical records, smart prescriptions with PDF/print, medication database, chat messaging, reviews, notifications, site settings, and bilingual Arabic/English support with RTL.
+A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 4 user roles (patient, doctor, admin, receptionist), appointment booking, medical records, smart prescriptions with PDF/print and quantity field, medication database, chat messaging, reviews, notifications, site settings, and bilingual Arabic/English support with RTL.
 
 ## Stack
 
@@ -33,6 +33,7 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - **Doctor**: doctor@royal.com / doctor123
 - **Patient**: patient@royal.com / patient123
 - **Admin**: admin@royal.com / admin123
+- **Receptionist**: (create via admin team management → assign role "receptionist")
 
 ## Features
 
@@ -90,7 +91,7 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - `/doctor/dashboard` — Doctor dashboard with analytics
 - `/doctor/patients` — Patient directory with medical record creation
 - `/doctor/appointments` — Manage appointments (confirm/complete/cancel)
-- `/doctor/prescriptions` — Smart prescription builder with medication search + print
+- `/doctor/prescriptions` — Smart prescription builder (medication search, quantity field, print, edit, delete)
 - `/doctor/medications` — Medication database CRUD with categories
 - `/doctor/services` — Services management
 - `/doctor/chat` — Chat with patients
@@ -100,12 +101,18 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - `/admin/dashboard` — Admin dashboard with stats, charts, activity
 - `/admin/patients` — Patient management (view/edit patient info, view records)
 - `/admin/services` — CRUD services with bilingual names/descriptions/prices
-- `/admin/team` — User list with role management
+- `/admin/team` — User list with role management (assign receptionist role)
 - `/admin/appointments` — Manage all appointments
+- `/admin/prescriptions` — View/edit/delete all prescriptions across all doctors
 - `/admin/announcements` — Create/delete announcements with images
 - `/admin/chat` — Chat with patients/doctors
 - `/admin/settings` — Site settings (phone, email, address, about us, working hours)
 - `/admin/profile` — Edit name, phone
+
+### Receptionist Routes (role: receptionist)
+- `/receptionist/dashboard` — Reception overview (pending/confirmed counts, today's queue)
+- `/receptionist/queue` — Queue management: accept/reject pending appointments, reorder queue, toggle patient subscription, close schedule
+- `/receptionist/profile` — Edit name, phone
 
 ## Database Schema
 

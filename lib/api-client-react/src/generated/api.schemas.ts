@@ -33,6 +33,7 @@ export const UserRole = {
   patient: "patient",
   doctor: "doctor",
   admin: "admin",
+  receptionist: "receptionist",
 } as const;
 
 export interface User {
@@ -45,6 +46,7 @@ export interface User {
   role: UserRole;
   /** @nullable */
   dateOfBirth?: string | null;
+  isSubscribed?: boolean;
   createdAt: string;
 }
 
@@ -58,6 +60,8 @@ export interface UpdateUserBody {
   lastName?: string;
   phone?: string;
   dateOfBirth?: string;
+  role?: UserRole;
+  isSubscribed?: boolean;
 }
 
 export interface Service {
@@ -111,9 +115,12 @@ export interface Appointment {
   status: AppointmentStatus;
   /** @nullable */
   notes?: string | null;
+  /** @nullable */
+  queuePosition?: number | null;
   patientName: string;
   doctorName: string;
   serviceName: string;
+  patientIsSubscribed?: boolean;
   createdAt: string;
 }
 
@@ -140,6 +147,7 @@ export interface UpdateAppointmentBody {
   notes?: string;
   date?: string;
   time?: string;
+  queuePosition?: number | null;
 }
 
 export interface TimeSlot {
@@ -220,7 +228,14 @@ export interface PrescriptionItem {
   frequency: string;
   duration: string;
   /** @nullable */
+  quantity?: string | null;
+  /** @nullable */
   instructions?: string | null;
+}
+
+export interface UpdatePrescriptionBody {
+  items?: PrescriptionItem[];
+  notes?: string;
 }
 
 export interface Prescription {
@@ -399,6 +414,7 @@ export const ListUsersRole = {
   patient: "patient",
   doctor: "doctor",
   admin: "admin",
+  receptionist: "receptionist",
 } as const;
 
 export type ListAppointmentsParams = {

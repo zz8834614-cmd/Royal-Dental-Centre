@@ -17,6 +17,7 @@ import {
   Clock,
   LogOut,
   User,
+  ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -54,15 +55,23 @@ export function Sidebar() {
     { href: "/admin/services", label: t("admin.services"), icon: Stethoscope },
     { href: "/admin/team", label: t("admin.team"), icon: Users },
     { href: "/admin/appointments", label: t("nav.appointments"), icon: CalendarDays },
+    { href: "/admin/prescriptions", label: language === "ar" ? "الوصفات" : "Prescriptions", icon: Pill },
     { href: "/admin/announcements", label: t("nav.announcements"), icon: Megaphone },
     { href: "/admin/chat", label: t("nav.messages"), icon: MessageSquare },
     { href: "/admin/settings", label: t("nav.settings"), icon: Settings },
     { href: "/admin/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 
+  const receptionistLinks = [
+    { href: "/receptionist/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/receptionist/queue", label: language === "ar" ? "قائمة الانتظار" : "Queue", icon: ListOrdered },
+    { href: "/receptionist/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
+  ];
+
   const links = 
     user.role === "patient" ? patientLinks :
     user.role === "doctor" ? doctorLinks :
+    user.role === "receptionist" ? receptionistLinks :
     adminLinks;
 
   return (

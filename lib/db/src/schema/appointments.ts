@@ -13,6 +13,7 @@ export const appointmentsTable = pgTable("appointments", {
   time: text("time").notNull(),
   status: text("status", { enum: ["pending", "confirmed", "completed", "cancelled"] }).notNull().default("pending"),
   notes: text("notes"),
+  queuePosition: integer("queue_position"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

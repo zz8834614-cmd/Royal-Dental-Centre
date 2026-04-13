@@ -35,6 +35,10 @@ import AdminTeam from "@/pages/admin/Team";
 import AdminAnnouncements from "@/pages/admin/Announcements";
 import AdminPatients from "@/pages/admin/Patients";
 import AdminSettings from "@/pages/admin/Settings";
+import AdminPrescriptions from "@/pages/admin/Prescriptions";
+
+import ReceptionistDashboard from "@/pages/receptionist/Dashboard";
+import ReceptionistQueue from "@/pages/receptionist/Queue";
 
 const queryClient = new QueryClient();
 
@@ -72,9 +76,14 @@ function Router() {
       <Route path="/admin/announcements" component={AdminAnnouncements} />
       <Route path="/admin/appointments" component={DoctorAppointments} />
       <Route path="/admin/patients" component={AdminPatients} />
+      <Route path="/admin/prescriptions" component={AdminPrescriptions} />
       <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin/profile" component={Profile} />
       <Route path="/admin/chat" component={Chat} />
+      
+      <Route path="/receptionist/dashboard" component={ReceptionistDashboard} />
+      <Route path="/receptionist/queue" component={ReceptionistQueue} />
+      <Route path="/receptionist/profile" component={Profile} />
       
       <Route component={NotFound} />
     </Switch>

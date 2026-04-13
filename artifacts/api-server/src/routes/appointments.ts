@@ -23,9 +23,11 @@ function formatAppointment(apt: any, patient: any, doctor: any, service: any) {
     time: apt.time,
     status: apt.status,
     notes: apt.notes,
+    queuePosition: apt.queuePosition ?? null,
     patientName: `${patient.firstName} ${patient.lastName}`,
     doctorName: `${doctor.firstName} ${doctor.lastName}`,
     serviceName: service.name,
+    patientIsSubscribed: patient.isSubscribed === "true",
     createdAt: apt.createdAt.toISOString(),
   };
 }
@@ -50,7 +52,10 @@ router.get("/appointments", authMiddleware, async (req, res): Promise<void> => {
     query = query.where(and(...conditions)) as typeof query;
   }
 
-  const appointments = await query.orderBy(sql`${appointmentsTable.createdAt} DESC`);
+  const appointments = await query.orderBy(
+    sql`COALESCE(${appointmentsTable.queuePosition}, 9999)`,
+    sql`${appointmentsTable.createdAt} DESC`
+  );
 
   const result = [];
   for (const apt of appointments) {
@@ -66,6 +71,11 @@ router.get("/appointments", authMiddleware, async (req, res): Promise<void> => {
 });
 
 router.post("/appointments", authMiddleware, async (req, res): Promise<void> => {
+  // Check if queue is closed
+  const closedSetting = await db.query?.siteSettingsTable?.findFirst?.({
+    where: (t: any, { eq }: any) => eq(t.key, "queue_closed")
+  }).catch(() => null);
+
   const parsed = CreateAppointmentBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -88,15 +98,15 @@ router.post("/appointments", authMiddleware, async (req, res): Promise<void> => 
 
   await db.insert(notificationsTable).values({
     userId: parsed.data.doctorId,
-    title: "New Appointment",
-    message: `${patient.firstName} ${patient.lastName} booked an appointment for ${parsed.data.date} at ${parsed.data.time}`,
+    title: "موعد جديد",
+    message: `${patient.firstName} ${patient.lastName} حجز موعداً في ${parsed.data.date} الساعة ${parsed.data.time}`,
     type: "appointment",
   });
 
   await db.insert(notificationsTable).values({
     userId: req.userId!,
-    title: "Appointment Booked",
-    message: `Your appointment with Dr. ${doctor.firstName} ${doctor.lastName} on ${parsed.data.date} at ${parsed.data.time} has been booked.`,
+    title: "تم الحجز",
+    message: `تم حجز موعدك مع الدكتور ${doctor.firstName} ${doctor.lastName} في ${parsed.data.date} الساعة ${parsed.data.time}.`,
     type: "appointment",
   });
 
@@ -153,11 +163,13 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
     }
   }
 
+  // Receptionist can only update status and queuePosition
   const updateData: Record<string, unknown> = {};
   if (body.data.status !== undefined) updateData.status = body.data.status;
   if (body.data.notes !== undefined) updateData.notes = body.data.notes;
-  if (body.data.date !== undefined) updateData.date = body.data.date;
-  if (body.data.time !== undefined) updateData.time = body.data.time;
+  if (body.data.date !== undefined && req.userRole !== "receptionist") updateData.date = body.data.date;
+  if (body.data.time !== undefined && req.userRole !== "receptionist") updateData.time = body.data.time;
+  if (body.data.queuePosition !== undefined) updateData.queuePosition = body.data.queuePosition;
 
   const [apt] = await db.update(appointmentsTable).set(updateData).where(eq(appointmentsTable.id, params.data.id)).returning();
   if (!apt) {
@@ -170,10 +182,15 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
   const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId));
 
   if (body.data.status) {
+    const statusMsg: Record<string, string> = {
+      confirmed: "تم تأكيد موعدك",
+      cancelled: "تم إلغاء موعدك",
+      completed: "تم إتمام موعدك",
+    };
     await db.insert(notificationsTable).values({
       userId: apt.patientId,
-      title: "Appointment Update",
-      message: `Your appointment on ${apt.date} at ${apt.time} has been ${body.data.status}.`,
+      title: "تحديث الموعد",
+      message: `${statusMsg[body.data.status] || "تم تحديث موعدك"} في ${apt.date} الساعة ${apt.time}.`,
       type: "appointment",
     });
   }

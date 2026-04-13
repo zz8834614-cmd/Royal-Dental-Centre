@@ -6,7 +6,7 @@ import { Redirect } from "wouter";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  allowedRoles?: ("patient" | "doctor" | "admin")[];
+  allowedRoles?: ("patient" | "doctor" | "admin" | "receptionist")[];
 }
 
 export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps) {

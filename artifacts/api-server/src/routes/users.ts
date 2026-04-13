@@ -2,9 +2,23 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { ListUsersQueryParams, GetUserParams, UpdateUserParams, UpdateUserBody } from "@workspace/api-zod";
-import { authMiddleware } from "../middlewares/auth";
+import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+function formatUser(u: any) {
+  return {
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    phone: u.phone,
+    role: u.role,
+    dateOfBirth: u.dateOfBirth,
+    isSubscribed: u.isSubscribed === "true",
+    createdAt: u.createdAt.toISOString(),
+  };
+}
 
 router.get("/users", authMiddleware, async (req, res): Promise<void> => {
   const params = ListUsersQueryParams.safeParse(req.query);
@@ -15,16 +29,7 @@ router.get("/users", authMiddleware, async (req, res): Promise<void> => {
   }
 
   const users = await query;
-  res.json(users.map(u => ({
-    id: u.id,
-    firstName: u.firstName,
-    lastName: u.lastName,
-    email: u.email,
-    phone: u.phone,
-    role: u.role,
-    dateOfBirth: u.dateOfBirth,
-    createdAt: u.createdAt.toISOString(),
-  })));
+  res.json(users.map(formatUser));
 });
 
 router.get("/users/:id", authMiddleware, async (req, res): Promise<void> => {
@@ -40,16 +45,7 @@ router.get("/users/:id", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: user.phone,
-    role: user.role,
-    dateOfBirth: user.dateOfBirth,
-    createdAt: user.createdAt.toISOString(),
-  });
+  res.json(formatUser(user));
 });
 
 router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
@@ -59,7 +55,7 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
-  if (req.userRole !== "admin" && req.userId !== params.data.id) {
+  if (req.userRole !== "admin" && req.userRole !== "receptionist" && req.userId !== params.data.id) {
     res.status(403).json({ error: "Not authorized to update this user" });
     return;
   }
@@ -70,22 +66,25 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
-  const [user] = await db.update(usersTable).set(body.data).where(eq(usersTable.id, params.data.id)).returning();
+  const updateData: Record<string, unknown> = {};
+  if (body.data.firstName !== undefined) updateData.firstName = body.data.firstName;
+  if (body.data.lastName !== undefined) updateData.lastName = body.data.lastName;
+  if (body.data.phone !== undefined) updateData.phone = body.data.phone;
+  if (body.data.dateOfBirth !== undefined) updateData.dateOfBirth = body.data.dateOfBirth;
+
+  // Only admin/receptionist can change role and subscription
+  if (req.userRole === "admin" || req.userRole === "receptionist") {
+    if (body.data.role !== undefined) updateData.role = body.data.role;
+    if (body.data.isSubscribed !== undefined) updateData.isSubscribed = body.data.isSubscribed ? "true" : "false";
+  }
+
+  const [user] = await db.update(usersTable).set(updateData).where(eq(usersTable.id, params.data.id)).returning();
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
   }
 
-  res.json({
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: user.phone,
-    role: user.role,
-    dateOfBirth: user.dateOfBirth,
-    createdAt: user.createdAt.toISOString(),
-  });
+  res.json(formatUser(user));
 });
 
 export default router;

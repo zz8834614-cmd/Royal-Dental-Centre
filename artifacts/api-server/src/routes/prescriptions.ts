@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, usersTable, prescriptionsTable, notificationsTable } from "@workspace/db";
-import { ListPrescriptionsQueryParams, CreatePrescriptionBody, GetPrescriptionParams } from "@workspace/api-zod";
-import { authMiddleware } from "../middlewares/auth";
+import { ListPrescriptionsQueryParams, CreatePrescriptionBody, GetPrescriptionParams, UpdatePrescriptionParams, UpdatePrescriptionBody } from "@workspace/api-zod";
+import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -50,7 +50,7 @@ router.get("/prescriptions", authMiddleware, async (req, res): Promise<void> => 
   res.json(result);
 });
 
-router.post("/prescriptions", authMiddleware, async (req, res): Promise<void> => {
+router.post("/prescriptions", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
   const parsed = CreatePrescriptionBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -66,8 +66,8 @@ router.post("/prescriptions", authMiddleware, async (req, res): Promise<void> =>
 
   await db.insert(notificationsTable).values({
     userId: parsed.data.patientId,
-    title: "New Prescription",
-    message: "You have a new prescription from your doctor.",
+    title: "وصفة طبية جديدة",
+    message: "لديك وصفة طبية جديدة من طبيبك.",
     type: "prescription",
   });
 
@@ -88,6 +88,61 @@ router.get("/prescriptions/:id", authMiddleware, async (req, res): Promise<void>
   }
 
   res.json(await formatPrescription(p));
+});
+
+router.patch("/prescriptions/:id", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
+  const params = UpdatePrescriptionParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const body = UpdatePrescriptionBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const [existing] = await db.select().from(prescriptionsTable).where(eq(prescriptionsTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "Prescription not found" });
+    return;
+  }
+
+  if (req.userRole !== "admin" && existing.doctorId !== req.userId) {
+    res.status(403).json({ error: "Not authorized to edit this prescription" });
+    return;
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (body.data.items !== undefined) updateData.items = body.data.items;
+  if (body.data.notes !== undefined) updateData.notes = body.data.notes;
+
+  const [prescription] = await db.update(prescriptionsTable).set(updateData).where(eq(prescriptionsTable.id, params.data.id)).returning();
+
+  res.json(await formatPrescription(prescription));
+});
+
+router.delete("/prescriptions/:id", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
+  const params = GetPrescriptionParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [existing] = await db.select().from(prescriptionsTable).where(eq(prescriptionsTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "Prescription not found" });
+    return;
+  }
+
+  if (req.userRole !== "admin" && existing.doctorId !== req.userId) {
+    res.status(403).json({ error: "Not authorized to delete this prescription" });
+    return;
+  }
+
+  await db.delete(prescriptionsTable).where(eq(prescriptionsTable.id, params.data.id));
+  res.sendStatus(204);
 });
 
 export default router;

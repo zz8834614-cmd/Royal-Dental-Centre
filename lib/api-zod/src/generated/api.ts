@@ -29,8 +29,9 @@ export const LoginResponse = zod.object({
     lastName: zod.string(),
     email: zod.string(),
     phone: zod.string().nullish(),
-    role: zod.enum(["patient", "doctor", "admin"]),
+    role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
     dateOfBirth: zod.string().nullish(),
+    isSubscribed: zod.boolean().optional(),
     createdAt: zod.coerce.date(),
   }),
   token: zod.string(),
@@ -57,8 +58,9 @@ export const GetCurrentUserResponse = zod.object({
   lastName: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
-  role: zod.enum(["patient", "doctor", "admin"]),
+  role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
   dateOfBirth: zod.string().nullish(),
+  isSubscribed: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
 });
 
@@ -73,7 +75,7 @@ export const LogoutResponse = zod.object({
  * @summary List users (admin/doctor)
  */
 export const ListUsersQueryParams = zod.object({
-  role: zod.enum(["patient", "doctor", "admin"]).optional(),
+  role: zod.enum(["patient", "doctor", "admin", "receptionist"]).optional(),
 });
 
 export const ListUsersResponseItem = zod.object({
@@ -82,8 +84,9 @@ export const ListUsersResponseItem = zod.object({
   lastName: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
-  role: zod.enum(["patient", "doctor", "admin"]),
+  role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
   dateOfBirth: zod.string().nullish(),
+  isSubscribed: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
@@ -118,6 +121,8 @@ export const UpdateUserBody = zod.object({
   lastName: zod.string().optional(),
   phone: zod.string().optional(),
   dateOfBirth: zod.string().optional(),
+  role: zod.enum(["patient", "doctor", "admin", "receptionist"]).optional(),
+  isSubscribed: zod.boolean().optional(),
 });
 
 export const UpdateUserResponse = zod.object({
@@ -126,8 +131,9 @@ export const UpdateUserResponse = zod.object({
   lastName: zod.string(),
   email: zod.string(),
   phone: zod.string().nullish(),
-  role: zod.enum(["patient", "doctor", "admin"]),
+  role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
   dateOfBirth: zod.string().nullish(),
+  isSubscribed: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
 });
 
@@ -216,9 +222,11 @@ export const ListAppointmentsResponseItem = zod.object({
   time: zod.string(),
   status: zod.enum(["pending", "confirmed", "completed", "cancelled"]),
   notes: zod.string().nullish(),
+  queuePosition: zod.number().nullish(),
   patientName: zod.string(),
   doctorName: zod.string(),
   serviceName: zod.string(),
+  patientIsSubscribed: zod.boolean().optional(),
   createdAt: zod.coerce.date(),
 });
 export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem);
@@ -270,6 +278,7 @@ export const UpdateAppointmentBody = zod.object({
   notes: zod.string().optional(),
   date: zod.string().optional(),
   time: zod.string().optional(),
+  queuePosition: zod.number().nullable().optional(),
 });
 
 export const UpdateAppointmentResponse = zod.object({
@@ -450,6 +459,15 @@ export const ListPrescriptionsQueryParams = zod.object({
   patientId: zod.coerce.number().optional(),
 });
 
+const PrescriptionItemSchema = zod.object({
+  medicationName: zod.string(),
+  dosage: zod.string(),
+  frequency: zod.string(),
+  duration: zod.string(),
+  quantity: zod.string().nullish(),
+  instructions: zod.string().nullish(),
+});
+
 export const ListPrescriptionsResponseItem = zod.object({
   id: zod.number(),
   patientId: zod.number(),
@@ -457,15 +475,7 @@ export const ListPrescriptionsResponseItem = zod.object({
   patientName: zod.string(),
   patientAge: zod.number().nullish(),
   doctorName: zod.string(),
-  items: zod.array(
-    zod.object({
-      medicationName: zod.string(),
-      dosage: zod.string(),
-      frequency: zod.string(),
-      duration: zod.string(),
-      instructions: zod.string().nullish(),
-    }),
-  ),
+  items: zod.array(PrescriptionItemSchema),
   notes: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -478,15 +488,7 @@ export const ListPrescriptionsResponse = zod.array(
  */
 export const CreatePrescriptionBody = zod.object({
   patientId: zod.number(),
-  items: zod.array(
-    zod.object({
-      medicationName: zod.string(),
-      dosage: zod.string(),
-      frequency: zod.string(),
-      duration: zod.string(),
-      instructions: zod.string().nullish(),
-    }),
-  ),
+  items: zod.array(PrescriptionItemSchema),
   notes: zod.string().optional(),
 });
 
@@ -504,17 +506,21 @@ export const GetPrescriptionResponse = zod.object({
   patientName: zod.string(),
   patientAge: zod.number().nullish(),
   doctorName: zod.string(),
-  items: zod.array(
-    zod.object({
-      medicationName: zod.string(),
-      dosage: zod.string(),
-      frequency: zod.string(),
-      duration: zod.string(),
-      instructions: zod.string().nullish(),
-    }),
-  ),
+  items: zod.array(PrescriptionItemSchema),
   notes: zod.string().nullish(),
   createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update prescription (doctor/admin)
+ */
+export const UpdatePrescriptionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePrescriptionBody = zod.object({
+  items: zod.array(PrescriptionItemSchema).optional(),
+  notes: zod.string().optional(),
 });
 
 /**

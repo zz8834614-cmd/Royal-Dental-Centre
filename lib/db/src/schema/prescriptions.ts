@@ -12,6 +12,7 @@ export const prescriptionsTable = pgTable("prescriptions", {
     dosage: string;
     frequency: string;
     duration: string;
+    quantity?: string | null;
     instructions?: string | null;
   }>>(),
   notes: text("notes"),

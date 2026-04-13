@@ -9,10 +9,11 @@ export const usersTable = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: text("password").notNull(),
   phone: text("phone"),
-  role: text("role", { enum: ["patient", "doctor", "admin"] }).notNull().default("patient"),
+  role: text("role", { enum: ["patient", "doctor", "admin", "receptionist"] }).notNull().default("patient"),
   dateOfBirth: text("date_of_birth"),
   medicalHistory: text("medical_history"),
   allergies: text("allergies"),
+  isSubscribed: text("is_subscribed").notNull().default("false"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
