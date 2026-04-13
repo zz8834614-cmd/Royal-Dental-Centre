@@ -23,7 +23,6 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   phone: z.string().min(5),
-  dateOfBirth: z.string().optional(),
 });
 
 export default function Register() {
@@ -38,7 +37,6 @@ export default function Register() {
       email: "",
       password: "",
       phone: "",
-      dateOfBirth: "",
     },
   });
 

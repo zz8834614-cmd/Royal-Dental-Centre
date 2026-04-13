@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message || t("auth.checkCredentials"),
         variant: "destructive"
       });
-      throw error;
     }
   };
 
@@ -80,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message || t("auth.checkDetails"),
         variant: "destructive"
       });
-      throw error;
     }
   };
 

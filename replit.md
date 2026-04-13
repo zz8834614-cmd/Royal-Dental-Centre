@@ -36,7 +36,7 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 
 ## Features
 
-- Public landing page with 3D animated hero (floating tooth with golden crown, particles)
+- Public landing page with centered text hero and realistic 3D molar tooth SVG below (floating animation with dental tools)
 - Public Services page (/services) — lists all dental services with prices
 - Public Reviews page (/reviews) — shows patient reviews with star ratings
 - Public Contact page (/contact) — phone, email, address, WhatsApp link
