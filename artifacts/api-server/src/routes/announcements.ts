@@ -21,6 +21,7 @@ router.get("/announcements", async (_req, res): Promise<void> => {
       contentAr: a.contentAr,
       type: a.type,
       isActive: a.isActive,
+      imageUrl: a.imageUrl,
       authorName: author ? `${author.firstName} ${author.lastName}` : "Unknown",
       createdAt: a.createdAt.toISOString(),
     });
@@ -42,6 +43,7 @@ router.post("/announcements", authMiddleware, requireRole("doctor", "admin"), as
     content: parsed.data.content,
     contentAr: parsed.data.contentAr,
     type: parsed.data.type,
+    imageUrl: (req.body as any).imageUrl || null,
     authorId: req.userId!,
   }).returning();
 
@@ -55,6 +57,7 @@ router.post("/announcements", authMiddleware, requireRole("doctor", "admin"), as
     contentAr: announcement.contentAr,
     type: announcement.type,
     isActive: announcement.isActive,
+    imageUrl: announcement.imageUrl,
     authorName: `${author.firstName} ${author.lastName}`,
     createdAt: announcement.createdAt.toISOString(),
   });

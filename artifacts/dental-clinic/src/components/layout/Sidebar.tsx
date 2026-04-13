@@ -16,6 +16,7 @@ import {
   Settings,
   Clock,
   LogOut,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -31,7 +32,9 @@ export function Sidebar() {
     { href: "/patient/appointments", label: t("nav.appointments"), icon: CalendarDays },
     { href: "/patient/records", label: t("nav.records"), icon: FileText },
     { href: "/patient/prescriptions", label: t("nav.prescriptions"), icon: Pill },
+    { href: "/patient/chat", label: t("nav.messages"), icon: MessageSquare },
     { href: "/patient/reviews", label: t("nav.reviews"), icon: Star },
+    { href: "/patient/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 
   const doctorLinks = [
@@ -39,23 +42,28 @@ export function Sidebar() {
     { href: "/doctor/patients", label: t("nav.patients"), icon: Users },
     { href: "/doctor/appointments", label: t("nav.appointments"), icon: CalendarDays },
     { href: "/doctor/prescriptions", label: t("nav.prescriptions"), icon: Pill },
+    { href: "/doctor/medications", label: t("nav.medications"), icon: Database },
     { href: "/doctor/services", label: t("nav.services"), icon: Stethoscope },
+    { href: "/doctor/chat", label: t("nav.messages"), icon: MessageSquare },
+    { href: "/doctor/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 
   const adminLinks = [
     { href: "/admin/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/admin/patients", label: t("nav.patients"), icon: Users },
     { href: "/admin/services", label: t("admin.services"), icon: Stethoscope },
     { href: "/admin/team", label: t("admin.team"), icon: Users },
     { href: "/admin/appointments", label: t("nav.appointments"), icon: CalendarDays },
     { href: "/admin/announcements", label: t("nav.announcements"), icon: Megaphone },
+    { href: "/admin/chat", label: t("nav.messages"), icon: MessageSquare },
+    { href: "/admin/settings", label: t("nav.settings"), icon: Settings },
+    { href: "/admin/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 
   const links = 
     user.role === "patient" ? patientLinks :
     user.role === "doctor" ? doctorLinks :
     adminLinks;
-
-  const isAr = language === "ar";
 
   return (
     <div className="flex h-full w-64 flex-col border-e bg-sidebar text-sidebar-foreground">
@@ -91,7 +99,7 @@ export function Sidebar() {
           onClick={logout}
         >
           <LogOut className="h-4 w-4" />
-          {isAr ? "تسجيل الخروج" : "Logout"}
+          {language === "ar" ? "تسجيل الخروج" : "Logout"}
         </Button>
       </div>
     </div>

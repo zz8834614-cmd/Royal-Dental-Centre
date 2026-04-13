@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 3 user roles (patient, doctor, admin), appointment booking, medical records, prescriptions, chat messaging, reviews, and bilingual Arabic/English support.
+A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 3 user roles (patient, doctor, admin), appointment booking, medical records, smart prescriptions with PDF/print, medication database, chat messaging, reviews, notifications, site settings, and bilingual Arabic/English support with RTL.
 
 ## Stack
 
@@ -36,21 +36,28 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 
 ## Features
 
-- Public landing page with centered text hero and realistic 3D molar tooth SVG below (floating animation with dental tools)
+- Public landing page with centered text hero and realistic 3D molar tooth SVG below (floating animation)
 - Public Services page (/services) — lists all dental services with prices
 - Public Reviews page (/reviews) — shows patient reviews with star ratings
 - Public Contact page (/contact) — phone, email, address, WhatsApp link
 - About Us page (/about) with mission, vision, values, team, working hours
 - WhatsApp floating chat button on public pages (wa.me/213699790790)
-- Patient portal: appointments, medical records, prescriptions, reviews
-- Doctor dashboard: patient management, prescriptions, appointments, analytics charts
-- Admin panel: dashboard with stats/charts, services CRUD, team management (role changes), announcements CRUD, appointments management
-- Smart prescription builder with medication database search
+- Profile editing for all roles (name, phone)
+- Patient portal: appointments (book/cancel), medical records, prescriptions with print/PDF, reviews, chat
+- Doctor portal: patient directory with medical record management (view/add records), prescriptions with smart medication search and print/PDF, medication database CRUD, appointments management, chat
+- Admin panel: dashboard with stats/charts, services CRUD, team management, patient management (view/edit), announcements with image support, appointments management, chat, site settings (phone, email, address, about us, working hours)
+- Smart prescription builder: medication search from database, auto-add to prescription, printable PDF with clinic branding
+- Medication database management with categories (antibiotic, painkiller, etc.)
+- Smart booking system with service selection, doctor selection, available time slots
+- Chat/messaging system between patients and doctors
+- Notification system (notifications table + API)
+- Site settings stored in database (clinic phone, email, address, working hours, about us content)
+- Announcements with image URL support
 - Star rating system for service reviews
 - Dark/light mode toggle (dark default)
 - Arabic/English language toggle with RTL support (Arabic default)
+- All pages fully bilingual (Arabic/English)
 - Glass morphism cards for services, reviews, announcements
-- Navbar with dropdown menus (no logo, text name only)
 - Professional Lucide SVG icons (no emojis)
 
 ## Auth System
@@ -72,28 +79,37 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 
 ### Patient Routes (role: patient)
 - `/patient/dashboard` — Patient dashboard
-- `/patient/appointments` — Appointment booking & history
-- `/patient/records` — Medical records
-- `/patient/prescriptions` — Prescriptions
+- `/patient/appointments` — Appointment booking (service/doctor/slot selection) & history with cancel
+- `/patient/records` — Medical records (bilingual)
+- `/patient/prescriptions` — Prescriptions with print/PDF
 - `/patient/reviews` — Submit/view reviews
+- `/patient/chat` — Chat with doctors
+- `/patient/profile` — Edit name, phone
 
 ### Doctor Routes (role: doctor)
 - `/doctor/dashboard` — Doctor dashboard with analytics
-- `/doctor/patients` — Patient list
-- `/doctor/appointments` — Manage appointments
-- `/doctor/prescriptions` — Manage prescriptions
-- `/doctor/services` — Services management (shared with admin)
+- `/doctor/patients` — Patient directory with medical record creation
+- `/doctor/appointments` — Manage appointments (confirm/complete/cancel)
+- `/doctor/prescriptions` — Smart prescription builder with medication search + print
+- `/doctor/medications` — Medication database CRUD with categories
+- `/doctor/services` — Services management
+- `/doctor/chat` — Chat with patients
+- `/doctor/profile` — Edit name, phone
 
 ### Admin Routes (role: admin)
 - `/admin/dashboard` — Admin dashboard with stats, charts, activity
+- `/admin/patients` — Patient management (view/edit patient info, view records)
 - `/admin/services` — CRUD services with bilingual names/descriptions/prices
-- `/admin/team` — User list with role management (admin/doctor/patient)
+- `/admin/team` — User list with role management
 - `/admin/appointments` — Manage all appointments
-- `/admin/announcements` — Create/delete announcements
+- `/admin/announcements` — Create/delete announcements with images
+- `/admin/chat` — Chat with patients/doctors
+- `/admin/settings` — Site settings (phone, email, address, about us, working hours)
+- `/admin/profile` — Edit name, phone
 
 ## Database Schema
 
-Tables: users, services, appointments, medical_records, medications, prescriptions, conversations, messages, announcements, reviews, notifications
+Tables: users, services, appointments, medical_records, medications, prescriptions, conversations, messages, announcements (with image_url), reviews, notifications, site_settings
 
 ## i18n
 

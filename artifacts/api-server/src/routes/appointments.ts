@@ -136,6 +136,23 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
     return;
   }
 
+  const [existing] = await db.select().from(appointmentsTable).where(eq(appointmentsTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "Appointment not found" });
+    return;
+  }
+
+  if (req.userRole === "patient") {
+    if (existing.patientId !== req.userId) {
+      res.status(403).json({ error: "Not authorized" });
+      return;
+    }
+    if (body.data.status && body.data.status !== "cancelled") {
+      res.status(403).json({ error: "Patients can only cancel appointments" });
+      return;
+    }
+  }
+
   const updateData: Record<string, unknown> = {};
   if (body.data.status !== undefined) updateData.status = body.data.status;
   if (body.data.notes !== undefined) updateData.notes = body.data.notes;

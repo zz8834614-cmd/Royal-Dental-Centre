@@ -12,6 +12,8 @@ import messagesRouter from "./messages";
 import announcementsRouter from "./announcements";
 import reviewsRouter from "./reviews";
 import dashboardRouter from "./dashboard";
+import notificationsRouter from "./notifications";
+import settingsRouter from "./settings";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use(messagesRouter);
 router.use(announcementsRouter);
 router.use(reviewsRouter);
 router.use(dashboardRouter);
+router.use(notificationsRouter);
+router.use(settingsRouter);
 
 export default router;

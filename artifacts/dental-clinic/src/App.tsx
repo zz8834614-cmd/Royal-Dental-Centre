@@ -14,6 +14,8 @@ import ReviewsPage from "@/pages/Reviews";
 import ContactPage from "@/pages/Contact";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Profile from "@/pages/Profile";
+import Chat from "@/pages/Chat";
 
 import PatientDashboard from "@/pages/patient/Dashboard";
 import PatientAppointments from "@/pages/patient/Appointments";
@@ -25,11 +27,14 @@ import DoctorDashboard from "@/pages/doctor/Dashboard";
 import DoctorPatients from "@/pages/doctor/Patients";
 import DoctorAppointments from "@/pages/doctor/Appointments";
 import DoctorPrescriptions from "@/pages/doctor/Prescriptions";
+import DoctorMedications from "@/pages/doctor/Medications";
 
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminServices from "@/pages/admin/Services";
 import AdminTeam from "@/pages/admin/Team";
 import AdminAnnouncements from "@/pages/admin/Announcements";
+import AdminPatients from "@/pages/admin/Patients";
+import AdminSettings from "@/pages/admin/Settings";
 
 const queryClient = new QueryClient();
 
@@ -49,18 +54,27 @@ function Router() {
       <Route path="/patient/records" component={PatientRecords} />
       <Route path="/patient/prescriptions" component={PatientPrescriptions} />
       <Route path="/patient/reviews" component={PatientReviews} />
+      <Route path="/patient/profile" component={Profile} />
+      <Route path="/patient/chat" component={Chat} />
       
       <Route path="/doctor/dashboard" component={DoctorDashboard} />
       <Route path="/doctor/patients" component={DoctorPatients} />
       <Route path="/doctor/appointments" component={DoctorAppointments} />
       <Route path="/doctor/prescriptions" component={DoctorPrescriptions} />
+      <Route path="/doctor/medications" component={DoctorMedications} />
       <Route path="/doctor/services" component={AdminServices} />
+      <Route path="/doctor/profile" component={Profile} />
+      <Route path="/doctor/chat" component={Chat} />
       
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/services" component={AdminServices} />
       <Route path="/admin/team" component={AdminTeam} />
       <Route path="/admin/announcements" component={AdminAnnouncements} />
       <Route path="/admin/appointments" component={DoctorAppointments} />
+      <Route path="/admin/patients" component={AdminPatients} />
+      <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/profile" component={Profile} />
+      <Route path="/admin/chat" component={Chat} />
       
       <Route component={NotFound} />
     </Switch>

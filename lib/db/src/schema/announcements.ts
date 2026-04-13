@@ -11,6 +11,7 @@ export const announcementsTable = pgTable("announcements", {
   contentAr: text("content_ar").notNull(),
   type: text("type", { enum: ["news", "offer", "update"] }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  imageUrl: text("image_url"),
   authorId: integer("author_id").notNull().references(() => usersTable.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

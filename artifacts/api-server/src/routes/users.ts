@@ -59,6 +59,11 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
+  if (req.userRole !== "admin" && req.userId !== params.data.id) {
+    res.status(403).json({ error: "Not authorized to update this user" });
+    return;
+  }
+
   const body = UpdateUserBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
