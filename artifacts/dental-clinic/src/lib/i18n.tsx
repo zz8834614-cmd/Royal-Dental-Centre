@@ -13,6 +13,7 @@ const translations = {
   en: {
     "app.name": "Royal Dental Centre",
     "nav.home": "Home",
+    "nav.about": "About Us",
     "nav.login": "Login",
     "nav.register": "Register",
     "nav.dashboard": "Dashboard",
@@ -31,6 +32,7 @@ const translations = {
   ar: {
     "app.name": "مركز رويال لطب الأسنان",
     "nav.home": "الرئيسية",
+    "nav.about": "من نحن",
     "nav.login": "تسجيل الدخول",
     "nav.register": "تسجيل",
     "nav.dashboard": "لوحة القيادة",

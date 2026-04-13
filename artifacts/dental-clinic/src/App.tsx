@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 
 import Landing from "@/pages/Landing";
+import AboutUs from "@/pages/AboutUs";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import PatientDashboard from "@/pages/patient/Dashboard";
@@ -17,6 +18,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/about" component={AboutUs} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       

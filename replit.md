@@ -36,6 +36,8 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 ## Features
 
 - Public landing page with services, reviews, announcements
+- About Us page (من نحن) with mission, vision, values, team, working hours
+- WhatsApp floating chat button on public pages (opens wa.me link)
 - Patient portal: appointments, medical records, prescriptions, chat, reviews
 - Doctor dashboard: patient management, prescriptions, medications, analytics charts
 - Admin panel: bookings, announcements, daily stats

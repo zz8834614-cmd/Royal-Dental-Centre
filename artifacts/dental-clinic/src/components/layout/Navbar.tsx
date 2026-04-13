@@ -26,6 +26,14 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
               {t("app.name")}
             </span>
           </Link>
+          <nav className="hidden md:flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/">{t("nav.home")}</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/about">{t("nav.about")}</Link>
+            </Button>
+          </nav>
         </div>
 
         <div className="flex items-center gap-4">

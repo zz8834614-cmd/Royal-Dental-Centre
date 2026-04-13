@@ -1,5 +1,6 @@
 import { useI18n } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
+import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useListServices, useListReviews, useListAnnouncements } from "@workspace/api-client-react";
@@ -111,6 +112,7 @@ export default function Landing() {
           <p>© {new Date().getFullYear()} Royal Dental Centre. All rights reserved.</p>
         </div>
       </footer>
+      <WhatsAppButton />
     </div>
   );
 }
