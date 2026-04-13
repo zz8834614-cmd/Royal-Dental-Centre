@@ -1,8 +1,8 @@
-# Workspace
+# Royal Dental Centre
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 3 user roles (patient, doctor, admin), appointment booking, medical records, prescriptions, chat messaging, reviews, and bilingual Arabic/English support.
 
 ## Stack
 
@@ -14,6 +14,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
+- **Frontend**: React + Vite + Tailwind CSS + shadcn/ui
+- **Charts**: Recharts
+- **Routing**: wouter
 - **Build**: esbuild (CJS bundle)
 
 ## Key Commands
@@ -24,4 +27,27 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## User Roles & Credentials (Seed Data)
+
+- **Doctor**: doctor@royal.com / doctor123
+- **Patient**: patient@royal.com / patient123
+- **Admin**: admin@royal.com / admin123
+
+## Features
+
+- Public landing page with services, reviews, announcements
+- Patient portal: appointments, medical records, prescriptions, chat, reviews
+- Doctor dashboard: patient management, prescriptions, medications, analytics charts
+- Admin panel: bookings, announcements, daily stats
+- Smart prescription builder with medication database search
+- Star rating system for service reviews
+- Arabic/English language toggle with RTL support
+- Notification system for appointment confirmations and reminders
+
+## Database Schema
+
+Tables: users, services, appointments, medical_records, medications, prescriptions, conversations, messages, announcements, reviews, notifications
+
+## API Auth
+
+Simple token-based auth using user ID in `x-user-id` header. Login returns user ID as token, stored client-side.
