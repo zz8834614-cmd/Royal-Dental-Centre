@@ -20,7 +20,7 @@ export default function AdminPatients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { data: patients, refetch } = useListPatients({ search }, { query: { refetchInterval: 15000, refetchOnMount: "always" } });
+  const { data: patients, refetch } = useListPatients({ search }, { query: { refetchInterval: 5000, refetchOnMount: "always", staleTime: 0 } });
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ firstName: "", lastName: "", phone: "", medicalHistory: "", allergies: "" });

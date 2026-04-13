@@ -41,7 +41,15 @@ import AdminPrescriptions from "@/pages/admin/Prescriptions";
 import ReceptionistDashboard from "@/pages/receptionist/Dashboard";
 import ReceptionistQueue from "@/pages/receptionist/Queue";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      refetchOnWindowFocus: true,
+      retry: 1,
+    },
+  },
+});
 
 function Router() {
   return (
