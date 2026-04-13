@@ -70,7 +70,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>{t("auth.firstName")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input autoComplete="given-name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -83,7 +83,7 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>{t("auth.lastName")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input autoComplete="family-name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -97,7 +97,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{t("auth.email")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="m@example.com" type="email" {...field} />
+                        <Input placeholder="m@example.com" type="email" autoComplete="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,7 +110,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{t("auth.password")}</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" autoComplete="new-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

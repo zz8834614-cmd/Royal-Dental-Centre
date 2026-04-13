@@ -303,24 +303,14 @@
   z-index: 2;
 }
 
-.tooth-rotate-group {
-  transform-origin: 200px 200px;
-  animation: toothRotate 12s linear infinite;
-}
-
-@keyframes toothRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .tooth-float-anim {
-  animation: toothFloat 4s ease-in-out infinite;
-  transform-origin: 200px 200px;
+  animation: toothFloat 5s ease-in-out infinite;
+  transform-origin: 250px 300px;
 }
 
 @keyframes toothFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-12px); }
 }
 
 /* X-ray pulse inside the tooth */
@@ -365,7 +355,7 @@
 
 /* Medical tools animations */
 .tool-mirror {
-  transform-origin: 110px 200px;
+  transform-origin: 90px 290px;
   animation: toolMirror 6s ease-in-out infinite;
 }
 
@@ -377,7 +367,7 @@
 }
 
 .tool-probe {
-  transform-origin: 285px 175px;
+  transform-origin: 405px 260px;
   animation: toolProbe 5s ease-in-out infinite 1s;
 }
 
@@ -389,7 +379,7 @@
 }
 
 .tool-brush {
-  transform-origin: 298px 280px;
+  transform-origin: 383px 430px;
   animation: toolBrush 7s ease-in-out infinite 2s;
 }
 
@@ -509,7 +499,6 @@
   .gold-gradient-text { animation: none; }
   .hero-bg-animated { animation: none; }
   .particle { animation: none; display: none; }
-  .tooth-rotate-group { animation: none; }
   .tooth-float-anim { animation: none; }
   .xray-pulse { animation: none; opacity: 0.5; }
   .xray-inner-pulse { animation: none; }

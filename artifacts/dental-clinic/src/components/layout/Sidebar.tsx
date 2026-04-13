@@ -15,11 +15,13 @@ import {
   Stethoscope,
   Settings,
   Clock,
+  LogOut,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function Sidebar() {
-  const { user } = useAuth();
-  const { t } = useI18n();
+  const { user, logout } = useAuth();
+  const { t, language } = useI18n();
   const [location] = useLocation();
 
   if (!user) return null;
@@ -53,10 +55,12 @@ export function Sidebar() {
     user.role === "doctor" ? doctorLinks :
     adminLinks;
 
+  const isAr = language === "ar";
+
   return (
     <div className="flex h-full w-64 flex-col border-e bg-sidebar text-sidebar-foreground">
       <div className="p-4 border-b border-sidebar-border">
-        <p className="text-sm font-semibold text-sidebar-foreground">{t("nav.management")}</p>
+        <p className="text-sm font-semibold text-sidebar-foreground">{user.firstName} {user.lastName}</p>
         <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
       </div>
       <div className="flex-1 overflow-auto py-3">
@@ -79,6 +83,16 @@ export function Sidebar() {
             );
           })}
         </nav>
+      </div>
+      <div className="p-3 border-t border-sidebar-border">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-sm font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={logout}
+        >
+          <LogOut className="h-4 w-4" />
+          {isAr ? "تسجيل الخروج" : "Logout"}
+        </Button>
       </div>
     </div>
   );

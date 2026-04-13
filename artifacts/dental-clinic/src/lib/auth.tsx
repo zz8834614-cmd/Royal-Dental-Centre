@@ -87,16 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await logoutMutation.mutateAsync();
+    } catch (_) {
+    } finally {
       clearStoredToken();
       await refetch();
       toast({ title: t("auth.logoutSuccess") });
       setLocation("/");
-    } catch (error: any) {
-      clearStoredToken();
-      toast({ 
-        title: t("auth.logoutFailed"), 
-        variant: "destructive"
-      });
     }
   };
 
