@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
+import { ThemeProvider } from "@/lib/theme";
 
 import Landing from "@/pages/Landing";
 import AboutUs from "@/pages/AboutUs";
@@ -34,11 +35,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <I18nProvider>
-            <AuthProvider>
-              <Router />
-            </AuthProvider>
-          </I18nProvider>
+          <ThemeProvider>
+            <I18nProvider>
+              <AuthProvider>
+                <Router />
+              </AuthProvider>
+            </I18nProvider>
+          </ThemeProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

@@ -43,7 +43,10 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - Admin panel: bookings, announcements, daily stats
 - Smart prescription builder with medication database search
 - Star rating system for service reviews
+- Dark/light mode toggle with full theme support
 - Arabic/English language toggle with RTL support
+- 3D animated hero section with floating tooth, golden crown, particles
+- Glass morphism (glassmorphism) cards for services, reviews, announcements
 - Notification system for appointment confirmations and reminders
 
 ## Database Schema

@@ -7,7 +7,7 @@ export function WhatsAppButton() {
   const { language } = useI18n();
   const isAr = language === "ar";
 
-  const phoneNumber = "213555123456";
+  const phoneNumber = "213699790790";
   const defaultMessage = isAr
     ? "مرحباً، أريد الاستفسار عن خدمات العيادة"
     : "Hello, I would like to inquire about the clinic services";
