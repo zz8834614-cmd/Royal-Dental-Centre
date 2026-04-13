@@ -13,8 +13,9 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     "app.name": "Royal Dental Centre",
     "nav.home": "Home",
-    "nav.about": "About Us",
     "nav.services": "Services",
+    "nav.news": "News & Offers",
+    "nav.about": "About Us",
     "nav.contact": "Contact",
     "nav.login": "Login",
     "nav.register": "Register",
@@ -112,8 +113,9 @@ const translations: Record<string, Record<string, string>> = {
   ar: {
     "app.name": "مركز رويال لطب الأسنان",
     "nav.home": "الرئيسية",
-    "nav.about": "من نحن",
     "nav.services": "الخدمات",
+    "nav.news": "أخبار وعروض",
+    "nav.about": "من نحن",
     "nav.contact": "اتصل بنا",
     "nav.login": "تسجيل الدخول",
     "nav.register": "تسجيل جديد",

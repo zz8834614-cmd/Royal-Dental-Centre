@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   UserPlus,
   LogIn,
+  Newspaper,
 } from "lucide-react";
 
 export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
@@ -65,8 +66,9 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const navLinks = [
     { href: "/", label: t("nav.home"), icon: Home },
-    { href: "/about", label: t("nav.about"), icon: Info },
     { href: "/services", label: t("nav.services"), icon: Stethoscope },
+    { href: "/news", label: t("nav.news"), icon: Newspaper },
+    { href: "/about", label: t("nav.about"), icon: Info },
     { href: "/reviews", label: t("nav.reviews"), icon: Star },
     { href: "/contact", label: t("nav.contact"), icon: Phone },
   ];

@@ -12,6 +12,7 @@ import AboutUs from "@/pages/AboutUs";
 import ServicesPage from "@/pages/Services";
 import ReviewsPage from "@/pages/Reviews";
 import ContactPage from "@/pages/Contact";
+import NewsOffers from "@/pages/NewsOffers";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Profile from "@/pages/Profile";
@@ -46,8 +47,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
-      <Route path="/about" component={AboutUs} />
       <Route path="/services" component={ServicesPage} />
+      <Route path="/news" component={NewsOffers} />
+      <Route path="/about" component={AboutUs} />
       <Route path="/reviews" component={ReviewsPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/login" component={Login} />
