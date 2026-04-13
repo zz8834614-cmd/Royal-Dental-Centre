@@ -399,6 +399,157 @@
   50% { opacity: 1; transform: scale(1.8); }
 }
 
+/* ========== 3D LOGO SCENE ========== */
+.logo3d-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 900px;
+}
+
+.logo3d-glow-ring {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.22) 0%, transparent 70%);
+  animation: logo3dGlow 4s ease-in-out infinite;
+  pointer-events: none;
+}
+.logo3d-glow-ring-2 {
+  width: 60%;
+  height: 60%;
+  animation-delay: 2s;
+  background: radial-gradient(circle, rgba(218,165,32,0.18) 0%, transparent 70%);
+}
+
+@keyframes logo3dGlow {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.logo3d-wrapper {
+  position: relative;
+  width: 75%;
+  height: 75%;
+  transform-style: preserve-3d;
+  animation: logo3dFloat 6s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes logo3dFloat {
+  0%   { transform: translateY(0px)   rotateY(-12deg) rotateX(4deg); }
+  25%  { transform: translateY(-10px) rotateY(0deg)   rotateX(2deg); }
+  50%  { transform: translateY(-18px) rotateY(12deg)  rotateX(-2deg); }
+  75%  { transform: translateY(-8px)  rotateY(6deg)   rotateX(3deg); }
+  100% { transform: translateY(0px)   rotateY(-12deg) rotateX(4deg); }
+}
+
+.logo3d-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.logo3d-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.logo3d-front {
+  transform: translateZ(14px);
+  z-index: 3;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.logo3d-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 8px 32px rgba(218,165,32,0.35));
+}
+
+.logo3d-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.18) 0%,
+    rgba(255,255,255,0.08) 30%,
+    transparent 60%,
+    rgba(218,165,32,0.06) 100%
+  );
+  border-radius: 1rem;
+  animation: logo3dShine 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes logo3dShine {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.logo3d-depth {
+  background: linear-gradient(
+    to right,
+    rgba(218,165,32,0.45),
+    rgba(180,130,10,0.35)
+  );
+  border-radius: 0.5rem;
+}
+.logo3d-depth-1 { transform: translateZ(10px); opacity: 0.7; }
+.logo3d-depth-2 { transform: translateZ(6px);  opacity: 0.5; }
+.logo3d-depth-3 { transform: translateZ(2px);  opacity: 0.35; }
+
+.logo3d-back {
+  transform: translateZ(-14px) rotateY(180deg);
+}
+.logo3d-img-back {
+  opacity: 0.3;
+  filter: blur(2px);
+}
+
+.logo3d-shadow {
+  position: absolute;
+  bottom: -8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55%;
+  height: 12px;
+  background: radial-gradient(ellipse, rgba(218,165,32,0.3) 0%, transparent 75%);
+  border-radius: 50%;
+  animation: logo3dShadow 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes logo3dShadow {
+  0%, 100% { transform: translateX(-50%) scaleX(0.9); opacity: 0.5; }
+  50%       { transform: translateX(-50%) scaleX(1.1); opacity: 0.25; }
+}
+
+.logo3d-sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(218,165,32,0.9), transparent);
+  pointer-events: none;
+}
+.logo3d-sp-1 { width: 8px; height: 8px; top: 10%; left: 12%; animation: logo3dSpark 2.5s ease-in-out infinite; }
+.logo3d-sp-2 { width: 5px; height: 5px; top: 20%; right: 10%; animation: logo3dSpark 3.2s ease-in-out infinite 0.7s; background: radial-gradient(circle, rgba(255,255,255,0.8), transparent); }
+.logo3d-sp-3 { width: 7px; height: 7px; bottom: 20%; left: 8%; animation: logo3dSpark 2.8s ease-in-out infinite 1.4s; }
+.logo3d-sp-4 { width: 5px; height: 5px; bottom: 12%; right: 14%; animation: logo3dSpark 3.5s ease-in-out infinite 2s; background: radial-gradient(circle, rgba(255,215,0,0.9), transparent); }
+
+@keyframes logo3dSpark {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.6); }
+}
+
 /* ========== GLASS MORPHISM ========== */
 .glass-card {
   background: hsl(var(--card) / 0.7);

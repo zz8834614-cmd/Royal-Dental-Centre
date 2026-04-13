@@ -1,4 +1,4 @@
-import { useMemo, useId } from "react";
+import { useMemo } from "react";
 import { useI18n } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
@@ -12,217 +12,30 @@ import {
 } from "lucide-react";
 import { DentalLogo } from "@/components/ui/DentalLogo";
 
-function RealisticTooth3D() {
-  const uid = useId();
-  const gid = (name: string) => `${uid}-${name}`;
-
+function Logo3D() {
   return (
-    <div className="tooth-scene-container">
-      <div className="tooth-scene-glow" />
-      <svg viewBox="0 0 500 600" className="tooth-main-svg">
-        <defs>
-          <radialGradient id={gid("enamel")} cx="40%" cy="35%" r="60%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="25%" stopColor="#fafafa" />
-            <stop offset="50%" stopColor="#f2f0ed" />
-            <stop offset="75%" stopColor="#e8e4df" />
-            <stop offset="100%" stopColor="#ddd8d0" />
-          </radialGradient>
-
-          <linearGradient id={gid("rootGrad")} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#f0ece6" />
-            <stop offset="30%" stopColor="#e8e0d4" />
-            <stop offset="60%" stopColor="#ddd4c4" />
-            <stop offset="100%" stopColor="#cfc3af" />
-          </linearGradient>
-
-          <radialGradient id={gid("innerGlow")} cx="50%" cy="40%" r="50%">
-            <stop offset="0%" stopColor="rgba(100,180,255,0.25)" />
-            <stop offset="60%" stopColor="rgba(100,180,255,0.08)" />
-            <stop offset="100%" stopColor="rgba(100,180,255,0)" />
-          </radialGradient>
-
-          <linearGradient id={gid("highlight")} x1="30%" y1="0%" x2="70%" y2="100%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </linearGradient>
-
-          <linearGradient id={gid("goldTool")} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#B8860B" />
-            <stop offset="50%" stopColor="#FFD700" />
-            <stop offset="100%" stopColor="#B8860B" />
-          </linearGradient>
-
-          <radialGradient id={gid("gumLine")} cx="50%" cy="0%" r="100%">
-            <stop offset="0%" stopColor="rgba(220,140,140,0.15)" />
-            <stop offset="100%" stopColor="rgba(220,140,140,0)" />
-          </radialGradient>
-
-          <filter id={gid("shadow")}>
-            <feDropShadow dx="0" dy="8" stdDeviation="16" floodColor="rgba(0,0,0,0.25)" />
-          </filter>
-          <filter id={gid("softGlow")}>
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id={gid("toothBlur")}>
-            <feGaussianBlur stdDeviation="0.5" />
-          </filter>
-        </defs>
-
-        <g className="tooth-float-anim" filter={`url(#${gid("shadow")})`}>
-          {/* Crown (top part) - realistic molar with cusps */}
-          <path
-            d="M185 220 
-               C185 175, 195 140, 210 115
-               C218 100, 228 90, 240 85
-               C248 80, 252 80, 260 85
-               C272 90, 282 100, 290 115
-               C305 140, 315 175, 315 220
-               C315 235, 310 245, 300 250
-               C290 258, 270 260, 250 260
-               C230 260, 210 258, 200 250
-               C190 245, 185 235, 185 220Z"
-            fill={`url(#${gid("enamel")})`}
-            stroke="rgba(180,170,155,0.3)"
-            strokeWidth="0.5"
-          />
-
-          {/* Cusp detail lines (top grooves of molar) */}
-          <path
-            d="M220 135 C230 125, 240 118, 250 115 C260 118, 270 125, 280 135"
-            fill="none"
-            stroke="rgba(200,190,175,0.4)"
-            strokeWidth="1"
-          />
-          <path
-            d="M210 155 C225 142, 250 135, 275 142 C290 155, 290 155, 290 155"
-            fill="none"
-            stroke="rgba(200,190,175,0.25)"
-            strokeWidth="0.8"
-          />
-
-          {/* Central fissure (top view groove) */}
-          <path
-            d="M235 110 Q250 105 265 110 Q260 120 250 118 Q240 120 235 110Z"
-            fill="rgba(210,200,185,0.3)"
-          />
-
-          {/* Highlight (shine on crown) */}
-          <path
-            d="M200 160 C200 130, 220 105, 240 95 C235 105, 210 130, 210 165 C210 190, 205 205, 198 215Z"
-            fill={`url(#${gid("highlight")})`}
-            opacity="0.6"
-          />
-
-          {/* Neck area (cementoenamel junction) */}
-          <path
-            d="M192 245 C210 255, 235 260, 250 260 C265 260, 290 255, 308 245
-               C312 260, 310 275, 305 285
-               C295 288, 275 290, 250 290
-               C225 290, 205 288, 195 285
-               C190 275, 188 260, 192 245Z"
-            fill={`url(#${gid("gumLine")})`}
-          />
-
-          {/* Root 1 (mesial root - left) */}
-          <path
-            d="M200 280
-               C198 290, 195 310, 192 335
-               C190 355, 188 380, 190 400
-               C191 415, 195 440, 200 460
-               C203 470, 206 478, 208 485
-               C209 488, 210 488, 210 485
-               C215 470, 220 445, 225 420
-               C228 400, 230 380, 230 360
-               C230 340, 228 310, 225 290
-               C222 285, 210 282, 200 280Z"
-            fill={`url(#${gid("rootGrad")})`}
-            stroke="rgba(180,170,155,0.25)"
-            strokeWidth="0.5"
-          />
-
-          {/* Root 2 (distal root - right) */}
-          <path
-            d="M275 290
-               C272 310, 270 340, 270 360
-               C270 380, 272 400, 275 420
-               C280 445, 285 470, 290 485
-               C290 488, 291 488, 292 485
-               C294 478, 297 470, 300 460
-               C305 440, 309 415, 310 400
-               C312 380, 310 355, 308 335
-               C305 310, 302 290, 300 280
-               C290 282, 278 285, 275 290Z"
-            fill={`url(#${gid("rootGrad")})`}
-            stroke="rgba(180,170,155,0.25)"
-            strokeWidth="0.5"
-          />
-
-          {/* Root highlights */}
-          <path
-            d="M205 300 C205 330, 207 370, 210 410 C210 420, 210 430, 210 430"
-            fill="none"
-            stroke="rgba(255,255,255,0.25)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M280 300 C280 330, 282 370, 285 410 C285 420, 285 430, 285 430"
-            fill="none"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-
-          {/* X-ray inner structure (pulp chamber) */}
-          <g className="xray-pulse">
-            <path
-              d="M230 180 C230 165, 240 155, 250 155 C260 155, 270 165, 270 180
-                 L272 240 C272 250, 265 255, 250 255 C235 255, 228 250, 228 240Z"
-              fill={`url(#${gid("innerGlow")})`}
-              stroke="rgba(100,180,255,0.2)"
-              strokeWidth="0.5"
-              strokeDasharray="3,3"
-            />
-            <line x1="240" y1="260" x2="215" y2="400" stroke="rgba(100,180,255,0.12)" strokeWidth="3" strokeLinecap="round" className="xray-inner-pulse" />
-            <line x1="260" y1="260" x2="285" y2="400" stroke="rgba(100,180,255,0.12)" strokeWidth="3" strokeLinecap="round" className="xray-inner-pulse" />
-            <circle cx="250" cy="190" r="6" fill="rgba(100,180,255,0.15)" className="xray-inner-pulse" />
-          </g>
-        </g>
-
-        {/* Dental mirror tool (floating left) */}
-        <g className="tool-mirror" filter={`url(#${gid("softGlow")})`}>
-          <circle cx="90" cy="250" r="22" fill="none" stroke={`url(#${gid("goldTool")})`} strokeWidth="2.5" />
-          <circle cx="90" cy="250" r="17" fill="rgba(218,165,32,0.06)" />
-          <ellipse cx="87" cy="245" rx="8" ry="6" fill="rgba(255,255,255,0.15)" />
-          <line x1="90" y1="272" x2="85" y2="345" stroke={`url(#${gid("goldTool")})`} strokeWidth="3" strokeLinecap="round" />
-        </g>
-
-        {/* Explorer probe (floating right) */}
-        <g className="tool-probe" filter={`url(#${gid("softGlow")})`}>
-          <line x1="410" y1="200" x2="395" y2="310" stroke={`url(#${gid("goldTool")})`} strokeWidth="3" strokeLinecap="round" />
-          <circle cx="412" cy="195" r="5" fill="#DAA520" />
-          <path d="M393 310 Q388 325 395 335" stroke={`url(#${gid("goldTool")})`} strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        </g>
-
-        {/* Toothbrush (floating bottom-right) */}
-        <g className="tool-brush">
-          <rect x="380" y="400" width="7" height="60" rx="3.5" fill={`url(#${gid("goldTool")})`} transform="rotate(20, 383, 430)" />
-          <rect x="375" y="388" width="17" height="18" rx="4" fill="#DAA520" transform="rotate(20, 383, 397)" opacity="0.7" />
-        </g>
-
-        {/* Sparkles */}
-        <circle cx="130" cy="150" r="3" fill="rgba(218,165,32,0.5)" className="sparkle-a" />
-        <circle cx="370" cy="160" r="2.5" fill="rgba(218,165,32,0.4)" className="sparkle-b" />
-        <circle cx="140" cy="420" r="2" fill="rgba(218,165,32,0.3)" className="sparkle-c" />
-        <circle cx="360" cy="440" r="3" fill="rgba(218,165,32,0.4)" className="sparkle-a" />
-        <circle cx="420" cy="300" r="2" fill="rgba(100,200,255,0.35)" className="sparkle-b" />
-        <circle cx="70" cy="350" r="2.5" fill="rgba(100,200,255,0.25)" className="sparkle-c" />
-      </svg>
+    <div className="logo3d-scene">
+      <div className="logo3d-glow-ring" />
+      <div className="logo3d-glow-ring logo3d-glow-ring-2" />
+      <div className="logo3d-wrapper">
+        <div className="logo3d-card">
+          <div className="logo3d-face logo3d-front">
+            <img src="/logo.png" alt="Royal Dental Centre" className="logo3d-img" />
+            <div className="logo3d-shine" />
+          </div>
+          <div className="logo3d-face logo3d-depth logo3d-depth-1" />
+          <div className="logo3d-face logo3d-depth logo3d-depth-2" />
+          <div className="logo3d-face logo3d-depth logo3d-depth-3" />
+          <div className="logo3d-face logo3d-back">
+            <img src="/logo.png" alt="" className="logo3d-img logo3d-img-back" />
+          </div>
+        </div>
+      </div>
+      <div className="logo3d-shadow" />
+      <div className="logo3d-sparkle logo3d-sp-1" />
+      <div className="logo3d-sparkle logo3d-sp-2" />
+      <div className="logo3d-sparkle logo3d-sp-3" />
+      <div className="logo3d-sparkle logo3d-sp-4" />
     </div>
   );
 }
@@ -307,7 +120,7 @@ export default function Landing() {
 
             {/* 3D Tooth below the text */}
             <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 mb-6">
-              <RealisticTooth3D />
+              <Logo3D />
             </div>
 
             <div className="grid grid-cols-4 gap-4 md:gap-8 w-full max-w-[600px]">
