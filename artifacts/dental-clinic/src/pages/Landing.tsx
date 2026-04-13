@@ -512,7 +512,7 @@ export default function Landing() {
                   </div>
                 </div>
                 <div className="p-6 md:p-10 lg:p-14 flex flex-col justify-center items-center text-center space-y-4 bg-gradient-to-br from-transparent to-primary/5">
-                  <DentalLogo className="w-20 h-20 md:w-28 md:h-28" />
+                  <img src="/logo.png" alt="Royal Dental Centre" className="w-32 h-32 md:w-44 md:h-44 object-contain drop-shadow-lg" />
                   <h3 className="text-xl md:text-2xl font-bold gold-gradient-text">Royal Dental Centre</h3>
                   <p className="text-muted-foreground text-sm">
                     {isAr ? "ابتسامتك ثروتك" : "Your Smile is Your Treasure"}
@@ -530,7 +530,7 @@ export default function Landing() {
       <footer className="border-t py-8 md:py-12 bg-card/50 backdrop-blur-sm">
         <div className="container px-4 md:px-6 text-center text-muted-foreground space-y-2">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <DentalLogo className="w-6 h-6" />
+            <img src="/logo.png" alt="Royal Dental Centre" className="w-8 h-8 object-contain" />
             <span className="font-semibold text-foreground text-sm">Royal Dental Centre</span>
           </div>
           <p className="text-xs">© {new Date().getFullYear()} {isAr ? "جميع الحقوق محفوظة." : "All rights reserved."}</p>
