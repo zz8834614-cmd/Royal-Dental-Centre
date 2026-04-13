@@ -18,18 +18,8 @@ function Logo3D() {
       <div className="logo3d-glow-ring" />
       <div className="logo3d-glow-ring logo3d-glow-ring-2" />
       <div className="logo3d-wrapper">
-        <div className="logo3d-card">
-          <div className="logo3d-face logo3d-front">
-            <img src="/logo.png" alt="Royal Dental Centre" className="logo3d-img" />
-            <div className="logo3d-shine" />
-          </div>
-          <div className="logo3d-face logo3d-depth logo3d-depth-1" />
-          <div className="logo3d-face logo3d-depth logo3d-depth-2" />
-          <div className="logo3d-face logo3d-depth logo3d-depth-3" />
-          <div className="logo3d-face logo3d-back">
-            <img src="/logo.png" alt="" className="logo3d-img logo3d-img-back" />
-          </div>
-        </div>
+        <img src="/logo.png" alt="Royal Dental Centre" className="logo3d-img" />
+        <div className="logo3d-shine" />
       </div>
       <div className="logo3d-shadow" />
       <div className="logo3d-sparkle logo3d-sp-1" />

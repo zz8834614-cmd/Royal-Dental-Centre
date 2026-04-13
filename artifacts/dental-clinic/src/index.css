@@ -433,9 +433,8 @@
 
 .logo3d-wrapper {
   position: relative;
-  width: 75%;
-  height: 75%;
-  transform-style: preserve-3d;
+  width: 80%;
+  height: 80%;
   animation: logo3dFloat 6s ease-in-out infinite;
   z-index: 2;
 }
@@ -473,7 +472,8 @@
   height: 100%;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 8px 32px rgba(218,165,32,0.35));
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 12px 40px rgba(218,165,32,0.5));
 }
 
 .logo3d-shine {
