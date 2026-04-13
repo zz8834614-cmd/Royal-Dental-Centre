@@ -19,7 +19,7 @@ export default function DoctorPatients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const { data: patients } = useListPatients({ search });
+  const { data: patients } = useListPatients({ search }, { query: { refetchInterval: 15000, refetchOnMount: "always" } });
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [recordForm, setRecordForm] = useState({ diagnosis: "", treatment: "", toothNumber: "", notes: "" });

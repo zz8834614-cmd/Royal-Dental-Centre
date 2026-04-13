@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminTeam() {
   const { t } = useI18n();
-  const { data: users, refetch } = useListUsers();
+  const { data: users, refetch } = useListUsers({}, { query: { refetchInterval: 15000, refetchOnMount: "always" } });
   const updateUser = useUpdateUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
