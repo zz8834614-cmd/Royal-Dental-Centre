@@ -118,8 +118,8 @@
   --chart-4: 214.3 31.8% 91.4%;
   --chart-5: 0 0% 80%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
+  --app-font-sans: 'Noto Naskh Arabic', 'Inter', sans-serif;
+  --app-font-serif: 'Noto Naskh Arabic', Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: 0.5rem;
   

@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Link, Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Navbar } from "@/components/layout/Navbar";
-import { useI18n } from "@/lib/i18n";
 
 const registerSchema = z.object({
   firstName: z.string().min(2),
@@ -56,10 +56,8 @@ export default function Register() {
       <main className="flex-1 flex items-center justify-center p-4 py-10">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-            <CardDescription>
-              Enter your details below to create your account
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold">{t("auth.createAccount")}</CardTitle>
+            <CardDescription>{t("auth.createAccountDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -70,9 +68,9 @@ export default function Register() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t("auth.firstName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="John" {...field} />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -83,9 +81,9 @@ export default function Register() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t("auth.lastName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Doe" {...field} />
+                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -97,7 +95,7 @@ export default function Register() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("auth.email")}</FormLabel>
                       <FormControl>
                         <Input placeholder="m@example.com" type="email" {...field} />
                       </FormControl>
@@ -110,7 +108,7 @@ export default function Register() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("auth.password")}</FormLabel>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
@@ -123,38 +121,25 @@ export default function Register() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>{t("auth.phone")}</FormLabel>
                       <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dateOfBirth"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
+                        <Input placeholder="0699790790" dir="ltr" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Creating account..." : "Register"}
+                  {form.formState.isSubmitting ? t("auth.registering") : t("nav.register")}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter>
             <div className="text-sm text-muted-foreground text-center w-full">
-              Already have an account?{" "}
+              {t("auth.haveAccount")}{" "}
               <Link href="/login" className="text-primary hover:underline">
-                Login
+                {t("nav.login")}
               </Link>
             </div>
           </CardFooter>

@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useGetCurrentUser, useLogin, useLogout, useRegister } from "@workspace/api-client-react";
 import { User, LoginBody, RegisterBody } from "@workspace/api-client-react/src/generated/api.schemas";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useI18n } from "@/lib/i18n";
 
 interface AuthContextType {
   user: User | null;
@@ -12,12 +13,29 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+const AUTH_TOKEN_KEY = "royal_dental_token";
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setStoredToken(token: string): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearStoredToken(): void {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
+  const token = getStoredToken();
   const { data: user, isLoading: isUserLoading, refetch } = useGetCurrentUser({
     query: {
       retry: false,
+      enabled: !!token,
     }
   });
   
@@ -29,14 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (data: LoginBody) => {
     try {
-      await loginMutation.mutateAsync({ data });
+      const result = await loginMutation.mutateAsync({ data });
+      if (result.token) {
+        setStoredToken(result.token);
+      }
       await refetch();
-      toast({ title: "Logged in successfully" });
-      setLocation("/");
+      toast({ title: t("auth.loginSuccess") });
+      const role = result.user?.role || "patient";
+      setLocation(`/${role}/dashboard`);
     } catch (error: any) {
       toast({ 
-        title: "Login failed", 
-        description: error.message || "Please check your credentials",
+        title: t("auth.loginFailed"), 
+        description: error.message || t("auth.checkCredentials"),
         variant: "destructive"
       });
       throw error;
@@ -45,14 +67,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (data: RegisterBody) => {
     try {
-      await registerMutation.mutateAsync({ data });
+      const result = await registerMutation.mutateAsync({ data });
+      if (result.token) {
+        setStoredToken(result.token);
+      }
       await refetch();
-      toast({ title: "Registered successfully" });
-      setLocation("/");
+      toast({ title: t("auth.registerSuccess") });
+      setLocation("/patient/dashboard");
     } catch (error: any) {
       toast({ 
-        title: "Registration failed", 
-        description: error.message || "Please check your details",
+        title: t("auth.registerFailed"), 
+        description: error.message || t("auth.checkDetails"),
         variant: "destructive"
       });
       throw error;
@@ -62,19 +87,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await logoutMutation.mutateAsync();
+      clearStoredToken();
       await refetch();
-      toast({ title: "Logged out successfully" });
-      setLocation("/login");
+      toast({ title: t("auth.logoutSuccess") });
+      setLocation("/");
     } catch (error: any) {
+      clearStoredToken();
       toast({ 
-        title: "Logout failed", 
+        title: t("auth.logoutFailed"), 
         variant: "destructive"
       });
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user: user || null, isLoading: isUserLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user: user || null, isLoading: token ? isUserLoading : false, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

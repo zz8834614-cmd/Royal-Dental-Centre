@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Link, Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 
 export default function Login() {
   const { login, user } = useAuth();
+  const { t } = useI18n();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,9 +48,9 @@ export default function Login() {
       <main className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("auth.welcomeBack")}</CardTitle>
             <CardDescription>
-              Enter your email and password to login
+              {t("auth.enterCredentials")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -59,7 +61,7 @@ export default function Login() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("auth.email")}</FormLabel>
                       <FormControl>
                         <Input placeholder="m@example.com" {...field} />
                       </FormControl>
@@ -72,7 +74,7 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t("auth.password")}</FormLabel>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
@@ -81,16 +83,16 @@ export default function Login() {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Logging in..." : "Login"}
+                  {form.formState.isSubmitting ? t("auth.loggingIn") : t("nav.login")}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter>
             <div className="text-sm text-muted-foreground text-center w-full">
-              Don't have an account?{" "}
+              {t("auth.noAccount")}{" "}
               <Link href="/register" className="text-primary hover:underline">
-                Register
+                {t("nav.register")}
               </Link>
             </div>
           </CardFooter>

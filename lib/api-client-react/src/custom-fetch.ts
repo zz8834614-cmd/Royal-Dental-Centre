@@ -358,6 +358,14 @@ export async function customFetch<T = unknown>(
     }
   }
 
+  // Attach x-user-id header from localStorage for web apps
+  if (typeof window !== "undefined" && !headers.has("x-user-id")) {
+    const storedToken = window.localStorage.getItem("royal_dental_token");
+    if (storedToken) {
+      headers.set("x-user-id", storedToken);
+    }
+  }
+
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });

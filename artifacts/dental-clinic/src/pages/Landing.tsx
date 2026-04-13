@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useListServices, useListReviews, useListAnnouncements } from "@workspace/api-client-react";
-import { Star, ArrowRight, Sparkles, Phone, Mail, MapPin, Clock } from "lucide-react";
+import {
+  Star, ArrowRight, Sparkles, Phone, Mail, MapPin, Clock,
+  Brush, CircleDot, SmilePlus, Sun, Wrench, Syringe, Stethoscope, Scissors, ShieldCheck, type LucideIcon
+} from "lucide-react";
 import logoPath from "@assets/logo_dentaire_1776084221665.png";
 
 function Tooth3D() {
@@ -56,19 +59,19 @@ function Tooth3D() {
   );
 }
 
-const serviceIcons: Record<string, string> = {
-  "Teeth Cleaning": "🪥",
-  "Dental Filling": "🦷",
-  "Orthodontics": "😁",
-  "Teeth Whitening": "✨",
-  "Dental Implants": "🔩",
-  "Root Canal": "💉",
-  "تنظيف الأسنان": "🪥",
-  "حشو الأسنان": "🦷",
-  "تقويم الأسنان": "😁",
-  "تبييض الأسنان": "✨",
-  "زراعة الأسنان": "🔩",
-  "علاج العصب": "💉",
+const serviceIconMap: Record<string, LucideIcon> = {
+  "Teeth Cleaning": Brush,
+  "Dental Filling": CircleDot,
+  "Orthodontics": SmilePlus,
+  "Teeth Whitening": Sun,
+  "Dental Implants": Wrench,
+  "Root Canal": Syringe,
+  "تنظيف الأسنان": Brush,
+  "حشو الأسنان": CircleDot,
+  "تقويم الأسنان": SmilePlus,
+  "تبييض الأسنان": Sun,
+  "زراعة الأسنان": Wrench,
+  "علاج العصب": Syringe,
 };
 
 export default function Landing() {
@@ -188,12 +191,12 @@ export default function Landing() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services?.slice(0, 6).map((service, index) => {
                 const serviceName = isAr ? (service.nameAr || service.name) : service.name;
-                const icon = serviceIcons[serviceName] || serviceIcons[service.name] || "🦷";
+                const ServiceIcon = serviceIconMap[serviceName] || serviceIconMap[service.name] || Stethoscope;
                 return (
                   <div key={service.id} className="glass-card group" style={{ animationDelay: `${index * 0.1}s` }}>
                     <div className="p-8 space-y-5">
                       <div className="service-icon-3d">
-                        <span className="text-4xl">{icon}</span>
+                        <ServiceIcon className="w-8 h-8 text-primary" />
                       </div>
                       <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                         {serviceName}

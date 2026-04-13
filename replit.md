@@ -18,6 +18,7 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 - **Charts**: Recharts
 - **Routing**: wouter
 - **Build**: esbuild (CJS bundle)
+- **Arabic font**: Noto Naskh Arabic (Google Fonts)
 
 ## Key Commands
 
@@ -35,24 +36,72 @@ A comprehensive dental clinic management platform built as a pnpm workspace mono
 
 ## Features
 
-- Public landing page with services, reviews, announcements
-- About Us page (من نحن) with mission, vision, values, team, working hours
-- WhatsApp floating chat button on public pages (opens wa.me link)
-- Patient portal: appointments, medical records, prescriptions, chat, reviews
-- Doctor dashboard: patient management, prescriptions, medications, analytics charts
-- Admin panel: bookings, announcements, daily stats
+- Public landing page with 3D animated hero (floating tooth with golden crown, particles)
+- Public Services page (/services) — lists all dental services with prices
+- Public Reviews page (/reviews) — shows patient reviews with star ratings
+- Public Contact page (/contact) — phone, email, address, WhatsApp link
+- About Us page (/about) with mission, vision, values, team, working hours
+- WhatsApp floating chat button on public pages (wa.me/213699790790)
+- Patient portal: appointments, medical records, prescriptions, reviews
+- Doctor dashboard: patient management, prescriptions, appointments, analytics charts
+- Admin panel: dashboard with stats/charts, services CRUD, team management (role changes), announcements CRUD, appointments management
 - Smart prescription builder with medication database search
 - Star rating system for service reviews
-- Dark/light mode toggle with full theme support
-- Arabic/English language toggle with RTL support
-- 3D animated hero section with floating tooth, golden crown, particles
-- Glass morphism (glassmorphism) cards for services, reviews, announcements
-- Notification system for appointment confirmations and reminders
+- Dark/light mode toggle (dark default)
+- Arabic/English language toggle with RTL support (Arabic default)
+- Glass morphism cards for services, reviews, announcements
+- Navbar with dropdown menus (no logo, text name only)
+- Professional Lucide SVG icons (no emojis)
+
+## Auth System
+
+- Token stored in `localStorage` as `royal_dental_token` (plain user ID)
+- Sent as `x-user-id` header via `custom-fetch.ts`
+- Login redirects to `/{role}/dashboard`
+
+## Route Structure
+
+### Public Routes
+- `/` — Landing page
+- `/about` — About Us
+- `/services` — Services listing
+- `/reviews` — Patient reviews
+- `/contact` — Contact information
+- `/login` — Login form
+- `/register` — Registration form
+
+### Patient Routes (role: patient)
+- `/patient/dashboard` — Patient dashboard
+- `/patient/appointments` — Appointment booking & history
+- `/patient/records` — Medical records
+- `/patient/prescriptions` — Prescriptions
+- `/patient/reviews` — Submit/view reviews
+
+### Doctor Routes (role: doctor)
+- `/doctor/dashboard` — Doctor dashboard with analytics
+- `/doctor/patients` — Patient list
+- `/doctor/appointments` — Manage appointments
+- `/doctor/prescriptions` — Manage prescriptions
+- `/doctor/services` — Services management (shared with admin)
+
+### Admin Routes (role: admin)
+- `/admin/dashboard` — Admin dashboard with stats, charts, activity
+- `/admin/services` — CRUD services with bilingual names/descriptions/prices
+- `/admin/team` — User list with role management (admin/doctor/patient)
+- `/admin/appointments` — Manage all appointments
+- `/admin/announcements` — Create/delete announcements
 
 ## Database Schema
 
 Tables: users, services, appointments, medical_records, medications, prescriptions, conversations, messages, announcements, reviews, notifications
 
-## API Auth
+## i18n
 
-Simple token-based auth using user ID in `x-user-id` header. Login returns user ID as token, stored client-side.
+All translations in `artifacts/dental-clinic/src/lib/i18n.tsx`. Keys organized by prefix:
+- `nav.*` — Navigation labels
+- `auth.*` — Authentication forms
+- `admin.*` — Admin panel labels
+- `hero.*` — Hero section
+- `services.*`, `reviews.*`, `contact.*` — Public page content
+
+Default language: Arabic. Default theme: Dark.
