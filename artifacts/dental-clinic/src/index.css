@@ -75,9 +75,7 @@
 
   --background: 0 0% 100%;
   --foreground: 240 10% 15%;
-
   --border: 214.3 31.8% 91.4%;
-
   --card: 0 0% 100%;
   --card-foreground: 240 10% 15%;
   --card-border: 214.3 31.8% 91.4%;
@@ -95,21 +93,16 @@
   --popover-foreground: 240 10% 15%;
   --popover-border: 214.3 31.8% 91.4%;
 
-  --primary: 43 74% 49%; /* Regal Gold */
+  --primary: 43 74% 49%;
   --primary-foreground: 0 0% 100%;
-
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
-
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
-
-  --accent: 43 100% 96%; /* Light Gold */
+  --accent: 43 100% 96%;
   --accent-foreground: 43 74% 49%;
-
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-
   --input: 214.3 31.8% 91.4%;
   --ring: 43 74% 49%;
   --chart-1: 43 74% 49%;
@@ -146,9 +139,7 @@
 
   --background: 240 10% 4%;
   --foreground: 0 0% 98%;
-
   --border: 240 3.7% 15.9%;
-
   --card: 240 10% 6%;
   --card-foreground: 0 0% 98%;
   --card-border: 240 3.7% 15.9%;
@@ -168,19 +159,14 @@
 
   --primary: 43 74% 49%;
   --primary-foreground: 0 0% 100%;
-
   --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
-
   --muted: 240 3.7% 15.9%;
   --muted-foreground: 240 5% 64.9%;
-
   --accent: 240 3.7% 15.9%;
   --accent-foreground: 0 0% 98%;
-
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-
   --input: 240 3.7% 15.9%;
   --ring: 43 74% 49%;
   --chart-1: 43 74% 49%;
@@ -194,7 +180,6 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
@@ -209,6 +194,19 @@
     color: hsl(var(--muted-foreground));
     pointer-events: none;
   }
+}
+
+/* ========== NAVBAR GLASS ========== */
+.navbar-glass {
+  background: hsl(var(--background) / 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+}
+
+.dark .navbar-glass {
+  background: hsl(var(--background) / 0.6);
+  border-bottom-color: hsl(var(--border) / 0.2);
 }
 
 /* ========== GOLD GRADIENT TEXT ========== */
@@ -264,8 +262,8 @@
 
 .particle {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   background: radial-gradient(circle, rgba(218, 165, 32, 0.6), transparent);
   border-radius: 50%;
   animation: particleFloat 5s ease-in-out infinite;
@@ -278,44 +276,137 @@
   90% { opacity: 0; }
 }
 
-/* ========== 3D TOOTH ========== */
-.tooth-3d-container {
+/* ========== 3D TOOTH SCENE ========== */
+.tooth-scene-container {
+  position: relative;
   width: 100%;
   height: 100%;
-  perspective: 800px;
 }
 
-.tooth-float {
+.tooth-scene-glow {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%);
+  animation: sceneGlow 4s ease-in-out infinite;
+}
+
+@keyframes sceneGlow {
+  0%, 100% { opacity: 0.5; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.tooth-main-svg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.tooth-rotate-group {
+  transform-origin: 200px 200px;
+  animation: toothRotate 12s linear infinite;
+}
+
+@keyframes toothRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.tooth-float-anim {
   animation: toothFloat 4s ease-in-out infinite;
-  transform-origin: center;
+  transform-origin: 200px 200px;
 }
 
 @keyframes toothFloat {
-  0%, 100% { transform: translateY(0) rotateY(0deg); }
-  25% { transform: translateY(-8px) rotateY(3deg); }
-  50% { transform: translateY(-15px) rotateY(0deg); }
-  75% { transform: translateY(-8px) rotateY(-3deg); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
-.sparkle-1 { animation: sparkle 2s ease-in-out infinite; }
-.sparkle-2 { animation: sparkle 2.5s ease-in-out infinite 0.5s; }
-.sparkle-3 { animation: sparkle 3s ease-in-out infinite 1s; }
+/* X-ray pulse inside the tooth */
+.xray-pulse {
+  animation: xrayPulse 3s ease-in-out infinite;
+}
 
-@keyframes sparkle {
+@keyframes xrayPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+.xray-inner-pulse {
+  animation: xrayInnerPulse 2s ease-in-out infinite;
+}
+
+@keyframes xrayInnerPulse {
+  0%, 100% { r: 6; opacity: 0.3; }
+  50% { r: 12; opacity: 0.7; }
+}
+
+/* X-ray beams scanning */
+.xray-beam-1 {
+  animation: xrayBeamScan 3s ease-in-out infinite;
+  stroke-dasharray: 8 4;
+}
+.xray-beam-2 {
+  animation: xrayBeamScan 3s ease-in-out infinite 0.5s;
+  stroke-dasharray: 6 6;
+}
+.xray-beam-3 {
+  animation: xrayBeamScan 3s ease-in-out infinite 1s;
+  stroke-dasharray: 6 6;
+}
+
+@keyframes xrayBeamScan {
+  0%, 100% { opacity: 0; stroke-dashoffset: 0; }
+  30% { opacity: 0.5; }
+  50% { opacity: 0.8; stroke-dashoffset: -20; }
+  70% { opacity: 0.5; }
+}
+
+/* Medical tools animations */
+.tool-mirror {
+  transform-origin: 110px 200px;
+  animation: toolMirror 6s ease-in-out infinite;
+}
+
+@keyframes toolMirror {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-5px, -8px) rotate(-3deg); }
+  50% { transform: translate(0, -5px) rotate(0deg); }
+  75% { transform: translate(5px, -8px) rotate(3deg); }
+}
+
+.tool-probe {
+  transform-origin: 285px 175px;
+  animation: toolProbe 5s ease-in-out infinite 1s;
+}
+
+@keyframes toolProbe {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(6px, -5px) rotate(2deg); }
+  50% { transform: translate(3px, -10px) rotate(0deg); }
+  75% { transform: translate(-3px, -5px) rotate(-2deg); }
+}
+
+.tool-brush {
+  transform-origin: 298px 280px;
+  animation: toolBrush 7s ease-in-out infinite 2s;
+}
+
+@keyframes toolBrush {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  30% { transform: translate(-8px, -6px) rotate(-5deg); }
+  60% { transform: translate(4px, -3px) rotate(3deg); }
+}
+
+/* Sparkles on the tooth scene */
+.sparkle-a { animation: sparkleFloat 2.5s ease-in-out infinite; }
+.sparkle-b { animation: sparkleFloat 3s ease-in-out infinite 0.8s; }
+.sparkle-c { animation: sparkleFloat 3.5s ease-in-out infinite 1.5s; }
+
+@keyframes sparkleFloat {
   0%, 100% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.5); }
-}
-
-.gold-shine-path {
-  stroke-dasharray: 300;
-  stroke-dashoffset: 300;
-  animation: goldShinePath 3s ease-in-out infinite;
-}
-
-@keyframes goldShinePath {
-  0% { stroke-dashoffset: 300; }
-  50% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -300; }
+  50% { opacity: 1; transform: scale(1.8); }
 }
 
 /* ========== GLASS MORPHISM ========== */
@@ -330,7 +421,7 @@
 }
 
 .glass-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   border-color: hsl(var(--primary) / 0.3);
   box-shadow: 0 20px 40px -12px hsl(var(--primary) / 0.15),
               0 0 0 1px hsl(var(--primary) / 0.1);
@@ -361,9 +452,9 @@
 
 /* ========== SERVICE 3D ICON ========== */
 .service-icon-3d {
-  width: 72px;
-  height: 72px;
-  border-radius: 1.25rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 1rem;
   background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05));
   display: flex;
   align-items: center;
@@ -374,6 +465,13 @@
   box-shadow: 
     4px 4px 12px hsl(var(--primary) / 0.1),
     -2px -2px 8px hsl(var(--background) / 0.8);
+}
+
+@media (min-width: 768px) {
+  .service-icon-3d {
+    width: 64px;
+    height: 64px;
+  }
 }
 
 .glass-card:hover .service-icon-3d {
@@ -397,4 +495,30 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ========== MOBILE SAFE AREA ========== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ========== REDUCED MOTION ========== */
+@media (prefers-reduced-motion: reduce) {
+  .gold-gradient-text { animation: none; }
+  .hero-bg-animated { animation: none; }
+  .particle { animation: none; display: none; }
+  .tooth-rotate-group { animation: none; }
+  .tooth-float-anim { animation: none; }
+  .xray-pulse { animation: none; opacity: 0.5; }
+  .xray-inner-pulse { animation: none; }
+  .xray-beam-1, .xray-beam-2, .xray-beam-3 { animation: none; opacity: 0.3; }
+  .tool-mirror { animation: none; }
+  .tool-probe { animation: none; }
+  .tool-brush { animation: none; }
+  .sparkle-a, .sparkle-b, .sparkle-c { animation: none; opacity: 0.5; }
+  .tooth-scene-glow { animation: none; }
+  .glass-card { animation: none; }
+  .glass-card:hover { transform: none; }
 }
