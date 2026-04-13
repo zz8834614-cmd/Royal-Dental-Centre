@@ -145,6 +145,26 @@ export default function AdminServices() {
           </Card>
         )}
 
+        {services && services.length === 0 && !showForm && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Stethoscope className="h-8 w-8 text-primary/50" />
+              </div>
+              <h3 className="font-semibold text-lg mb-1">
+                {isAr ? "لا توجد خدمات بعد" : "No services yet"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {isAr ? "ابدأ بإضافة خدماتك الأولى" : "Start by adding your first service"}
+              </p>
+              <Button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(true); }}>
+                <Plus className="h-4 w-4 me-2" />
+                {t("admin.addService")}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-4">
           {services?.map(service => (
             <Card key={service.id} className="group">

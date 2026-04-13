@@ -99,8 +99,16 @@ router.delete("/services/:id", authMiddleware, requireRole("doctor", "admin"), a
     return;
   }
 
-  await db.delete(servicesTable).where(eq(servicesTable.id, params.data.id));
-  res.sendStatus(204);
+  try {
+    await db.delete(servicesTable).where(eq(servicesTable.id, params.data.id));
+    res.sendStatus(204);
+  } catch (err: any) {
+    if (err?.message?.includes("foreign key constraint") || err?.message?.includes("violates foreign key")) {
+      res.status(409).json({ error: "لا يمكن حذف هذه الخدمة لأنها مرتبطة بمواعيد أو مراجعات موجودة. يمكنك تعطيلها بدلاً من حذفها." });
+    } else {
+      throw err;
+    }
+  }
 });
 
 export default router;
