@@ -219,6 +219,58 @@
   border-bottom-color: hsl(var(--border) / 0.2);
 }
 
+/* ========== HERO CALLIGRAPHY TITLE ========== */
+.hero-calligraphy-line {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hero-calligraphy-gold {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #B8860B 0%, #DAA520 20%, #FFD700 40%, #FFF0A0 55%, #FFD700 70%, #DAA520 85%, #B8860B 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goldShimmer 4s ease infinite;
+  filter: drop-shadow(0 0 18px rgba(218,165,32,0.35));
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Decorative line under hero title */
+.hero-title-divider {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-title-divider::before,
+.hero-title-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent);
+}
+
+.hero-title-divider-ornament {
+  color: hsl(var(--primary));
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
 /* ========== GOLD GRADIENT TEXT ========== */
 .gold-gradient-text {
   background: linear-gradient(135deg, #DAA520, #FFD700, #B8860B, #FFD700, #DAA520);

@@ -79,13 +79,31 @@ export default function Landing() {
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] mb-4 md:mb-6">
-              <span className="block text-foreground">
-                {isAr ? "ابتسامتك" : "Your Smile,"}
-              </span>
-              <span className="block gold-gradient-text">
-                {isAr ? "تاجك الذهبي" : "Your Golden Crown"}
-              </span>
+            <h1 className="mb-4 md:mb-6">
+              {isAr ? (
+                <>
+                  <span className="block hero-calligraphy-line text-foreground text-5xl sm:text-6xl md:text-7xl lg:text-8xl">
+                    اِبْتِسَامَتُكَ
+                  </span>
+                  <span className="block hero-calligraphy-gold text-5xl sm:text-6xl md:text-7xl lg:text-8xl mt-1">
+                    تَاجُكَ الذَّهَبِيُّ
+                  </span>
+                  <div className="hero-title-divider mt-4">
+                    <span className="hero-title-divider-ornament">✦</span>
+                    <span className="hero-title-divider-ornament">❖</span>
+                    <span className="hero-title-divider-ornament">✦</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] text-foreground">
+                    Your Smile,
+                  </span>
+                  <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] gold-gradient-text">
+                    Your Golden Crown
+                  </span>
+                </>
+              )}
             </h1>
 
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-[600px] leading-relaxed mb-6 md:mb-8">
