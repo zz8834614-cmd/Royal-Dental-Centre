@@ -63,9 +63,7 @@ export default function Landing() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1">
-        <section className="hero-section relative overflow-hidden min-h-[90vh] md:min-h-screen flex items-center">
-          <div className="hero-bg-image" />
-          <div className="hero-overlay" />
+        <section className="hero-section relative overflow-hidden min-h-[90vh] md:min-h-screen flex flex-col items-center justify-center">
           <div className="hero-bg-animated" />
           <div className="hero-particles">
             {particles.map((p, i) => (
@@ -73,66 +71,59 @@ export default function Landing() {
             ))}
           </div>
 
-          <div className="container px-4 md:px-6 relative z-10 py-16 md:py-24">
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
-              <div className={`flex flex-col ${isAr ? "md:order-1" : ""}`}>
-                <div className="hero-title-badge mb-6">
-                  <Sparkles className="w-4 h-4" />
-                  <span>{isAr ? "رعاية أسنان متميزة" : "Premium Dental Care"}</span>
-                </div>
+          <div className="container px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-badge mb-6">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-medium text-primary">
+                {isAr ? "رعاية أسنان متميزة" : "Premium Dental Care"}
+              </span>
+            </div>
 
-                <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1] mb-5">
-                  <span className="block text-foreground">
-                    {isAr ? "ابتسامتك" : "Your Smile,"}
-                  </span>
-                  <span className="block gold-gradient-text">
-                    {isAr ? "تاجك الذهبي" : "Your Golden Crown"}
-                  </span>
-                </h1>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] mb-4 md:mb-6">
+              <span className="block text-foreground">
+                {isAr ? "ابتسامتك" : "Your Smile,"}
+              </span>
+              <span className="block gold-gradient-text">
+                {isAr ? "تاجك الذهبي" : "Your Golden Crown"}
+              </span>
+            </h1>
 
-                <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-[520px] leading-relaxed mb-8">
-                  {isAr
-                    ? "اكتشف مستوى جديداً من العناية بأسنانك مع أحدث التقنيات وفريق من أفضل الأطباء المتخصصين."
-                    : "Discover a new level of dental care with cutting-edge technology and a team of top specialists."}
-                </p>
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-[600px] leading-relaxed mb-6 md:mb-8">
+              {isAr
+                ? "اكتشف مستوى جديداً من العناية بأسنانك مع أحدث التقنيات وفريق من أفضل الأطباء المتخصصين."
+                : "Discover a new level of dental care with cutting-edge technology and a team of top specialists."}
+            </p>
 
-                <div className="flex flex-wrap gap-3 mb-10">
-                  <Button size="lg" className="h-13 md:h-14 px-7 md:px-9 text-sm md:text-base rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all group" asChild>
-                    <Link href="/login">
-                      {t("hero.book")}
-                      <ArrowRight className={`w-4 h-4 ${isAr ? "mr-2 rotate-180" : "ml-2"} group-hover:translate-x-1 transition-transform`} />
-                    </Link>
-                  </Button>
-                  <Button size="lg" variant="outline" className="h-13 md:h-14 px-7 md:px-9 text-sm md:text-base rounded-2xl glass-button" asChild>
-                    <Link href="/about">
-                      {isAr ? "اعرف المزيد" : "Learn More"}
-                    </Link>
-                  </Button>
-                </div>
+            <div className="flex flex-wrap gap-3 justify-center mb-8">
+              <Button size="lg" className="h-12 md:h-14 px-6 md:px-8 text-sm md:text-base rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all group" asChild>
+                <Link href="/login">
+                  {t("hero.book")}
+                  <ArrowRight className={`w-4 h-4 ${isAr ? "mr-2 rotate-180" : "ml-2"} group-hover:translate-x-1 transition-transform`} />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-12 md:h-14 px-6 md:px-8 text-sm md:text-base rounded-2xl glass-button" asChild>
+                <Link href="/about">
+                  {isAr ? "اعرف المزيد" : "Learn More"}
+                </Link>
+              </Button>
+            </div>
 
-                <div className="grid grid-cols-4 gap-3 md:gap-4">
-                  {stats.map((stat, i) => {
-                    const Icon = stat.icon;
-                    return (
-                      <div key={i} className="hero-stat-card">
-                        <Icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
-                        <p className="text-lg sm:text-xl md:text-2xl font-bold gold-gradient-text">{stat.value}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{stat.label}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* 3D Tooth below the text */}
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 mb-6">
+              <Logo3D />
+            </div>
 
-              <div className={`hidden md:block ${isAr ? "md:order-0" : ""}`}>
-                <div className="hero-side-image aspect-[3/4] max-w-md mx-auto">
-                  <img
-                    src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=800&q=80"
-                    alt={isAr ? "عيادة أسنان حديثة" : "Modern Dental Clinic"}
-                    loading="eager"
-                  />
-                </div>
-              </div>
+            <div className="grid grid-cols-4 gap-4 md:gap-8 w-full max-w-[600px]">
+              {stats.map((stat, i) => {
+                const Icon = stat.icon;
+                return (
+                  <div key={i} className="text-center space-y-1">
+                    <Icon className="w-4 h-4 text-primary mx-auto mb-1 hidden sm:block" />
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold gold-gradient-text">{stat.value}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -189,25 +180,23 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="py-12 md:py-20 relative overflow-hidden">
+        <section className="py-12 md:py-20">
           <div className="container px-4 md:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { icon: Shield, title: isAr ? "تعقيم كامل" : "Full Sterilization", desc: isAr ? "أعلى معايير النظافة والتعقيم" : "Highest hygiene standards", color: "from-emerald-500/15 to-emerald-500/5" },
-                { icon: Award, title: isAr ? "أطباء معتمدون" : "Certified Doctors", desc: isAr ? "خبرة دولية معتمدة" : "International certified expertise", color: "from-blue-500/15 to-blue-500/5" },
-                { icon: Heart, title: isAr ? "رعاية شاملة" : "Complete Care", desc: isAr ? "جميع خدمات طب الأسنان" : "All dental services", color: "from-rose-500/15 to-rose-500/5" },
-                { icon: Clock, title: isAr ? "مواعيد مرنة" : "Flexible Hours", desc: isAr ? "نناسب جدولك الشخصي" : "Fits your personal schedule", color: "from-amber-500/15 to-amber-500/5" },
+                { icon: Shield, title: isAr ? "تعقيم كامل" : "Full Sterilization", desc: isAr ? "أعلى معايير النظافة" : "Highest hygiene standards" },
+                { icon: Award, title: isAr ? "أطباء معتمدون" : "Certified Doctors", desc: isAr ? "خبرة عالمية" : "Global expertise" },
+                { icon: Heart, title: isAr ? "رعاية شاملة" : "Complete Care", desc: isAr ? "كل الخدمات" : "All services" },
+                { icon: Clock, title: isAr ? "مواعيد مرنة" : "Flexible Hours", desc: isAr ? "نناسب جدولك" : "Fits your schedule" },
               ].map((item, i) => {
                 const Icon = item.icon;
                 return (
-                  <div key={i} className="glass-card group" style={{ animationDelay: `${i * 0.1}s` }}>
-                    <div className="p-5 md:p-7 text-center space-y-3">
-                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto border border-white/5`}>
-                        <Icon className="w-6 h-6 md:w-7 md:h-7 text-primary" />
-                      </div>
-                      <h3 className="font-bold text-sm md:text-base group-hover:text-primary transition-colors">{item.title}</h3>
-                      <p className="text-[11px] md:text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                  <div key={i} className="text-center p-4 md:p-6 rounded-2xl bg-card/50 border border-border/30 hover:border-primary/20 transition-all">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                      <Icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                     </div>
+                    <h3 className="font-semibold text-sm md:text-base mb-1">{item.title}</h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">{item.desc}</p>
                   </div>
                 );
               })}
