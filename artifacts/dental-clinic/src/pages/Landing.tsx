@@ -64,6 +64,16 @@ export default function Landing() {
       <Navbar />
       <main className="flex-1">
         <section className="hero-section relative overflow-hidden min-h-[90vh] md:min-h-screen flex flex-col items-center justify-center">
+          {/* Background mosaic of dental clinic images */}
+          <div className="hero-bg-mosaic">
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&q=70&fit=crop" alt="" loading="eager" />
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&q=70&fit=crop" alt="" loading="eager" />
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=70&fit=crop" alt="" loading="eager" />
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&q=70&fit=crop" alt="" loading="eager" />
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&q=70&fit=crop" alt="" loading="eager" />
+            <img className="hero-bg-mosaic-img" src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&q=70&fit=crop" alt="" loading="eager" />
+          </div>
+          <div className="hero-bg-mosaic-overlay" />
           <div className="hero-bg-animated" />
           <div className="hero-particles">
             {particles.map((p, i) => (

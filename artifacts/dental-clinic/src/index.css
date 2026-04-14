@@ -225,6 +225,11 @@
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
+  color: #ffffff;
+  text-shadow:
+    0 0 30px rgba(255,255,255,0.4),
+    0 2px 8px rgba(0,0,0,0.9),
+    0 4px 20px rgba(0,0,0,0.7);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -234,13 +239,13 @@
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #B8860B 0%, #DAA520 20%, #FFD700 40%, #FFF0A0 55%, #FFD700 70%, #DAA520 85%, #B8860B 100%);
+  background: linear-gradient(135deg, #B8860B 0%, #DAA520 18%, #FFD700 38%, #FFFACD 55%, #FFD700 72%, #DAA520 88%, #B8860B 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: goldShimmer 4s ease infinite;
-  filter: drop-shadow(0 0 18px rgba(218,165,32,0.35));
+  filter: drop-shadow(0 2px 12px rgba(218,165,32,0.7)) drop-shadow(0 0 30px rgba(218,165,32,0.4));
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -248,7 +253,7 @@
 /* Decorative line under hero title */
 .hero-title-divider {
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   margin: 0 auto;
   position: relative;
   display: flex;
@@ -262,13 +267,50 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(218,165,32,0.8), transparent);
 }
 
 .hero-title-divider-ornament {
-  color: hsl(var(--primary));
-  font-size: 1.2rem;
-  opacity: 0.8;
+  color: #FFD700;
+  font-size: 1.3rem;
+  opacity: 1;
+  text-shadow: 0 0 10px rgba(218,165,32,0.6);
+}
+
+/* ========== HERO BG IMAGES MOSAIC ========== */
+.hero-bg-mosaic {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+}
+
+.hero-bg-mosaic-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.28;
+  transition: opacity 0.3s;
+}
+
+.dark .hero-bg-mosaic-img {
+  opacity: 0.22;
+}
+
+.hero-bg-mosaic-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 70%),
+    linear-gradient(180deg,
+      hsl(var(--background) / 0.55) 0%,
+      hsl(var(--background) / 0.25) 25%,
+      hsl(var(--background) / 0.25) 75%,
+      hsl(var(--background) / 0.9) 100%
+    );
 }
 
 /* ========== GOLD GRADIENT TEXT ========== */
