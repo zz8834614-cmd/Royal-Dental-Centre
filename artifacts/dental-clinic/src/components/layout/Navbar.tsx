@@ -91,7 +91,7 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
             )}
 
             <Link href="/" className="flex items-center gap-2">
-              <DentalLogo className="w-9 h-9 md:w-10 md:h-10" />
+              <img src="/logo.png" alt="Royal Dental Centre" className="w-9 h-9 md:w-10 md:h-10 object-contain navbar-logo" />
             </Link>
 
             <nav className="hidden md:flex items-center gap-0.5 ms-2">
@@ -165,7 +165,7 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-3">
-              <DentalLogo className="w-10 h-10" />
+              <img src="/logo.png" alt="Royal Dental Centre" className="w-10 h-10 object-contain navbar-logo" />
               <span className="text-sm font-bold gold-gradient-text">Royal Dental</span>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={closeMobile} aria-label="Close menu">

@@ -196,6 +196,16 @@
   }
 }
 
+/* ========== NAVBAR LOGO ========== */
+.navbar-logo {
+  mix-blend-mode: multiply;
+  border-radius: 0.375rem;
+}
+
+.dark .navbar-logo {
+  mix-blend-mode: screen;
+}
+
 /* ========== NAVBAR GLASS ========== */
 .navbar-glass {
   background: hsl(var(--background) / 0.7);
