@@ -3,6 +3,11 @@ import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { ListUsersQueryParams, GetUserParams, UpdateUserParams, UpdateUserBody } from "@workspace/api-zod";
 import { authMiddleware, requireRole } from "../middlewares/auth";
+import crypto from "crypto";
+
+function hashPassword(password: string): string {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
 const router: IRouter = Router();
 
@@ -108,6 +113,44 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
   }
 
   res.json(formatUser(user));
+});
+
+router.post("/users", authMiddleware, requireRole("admin"), async (req, res): Promise<void> => {
+  const { firstName, lastName, email, password, role, speciality, bio, phone } = req.body;
+  if (!firstName || !lastName || !email || !password) {
+    res.status(400).json({ error: "firstName, lastName, email and password are required" });
+    return;
+  }
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (existing.length > 0) {
+    res.status(409).json({ error: "Email already registered" });
+    return;
+  }
+  const [user] = await db.insert(usersTable).values({
+    firstName,
+    lastName,
+    email,
+    password: hashPassword(password),
+    phone: phone ?? null,
+    role: role ?? "doctor",
+    speciality: speciality ?? null,
+    bio: bio ?? null,
+  }).returning();
+  res.status(201).json(formatUser(user));
+});
+
+router.delete("/users/:id", authMiddleware, requireRole("admin"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, id)).returning();
+  if (!deleted) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json({ success: true });
 });
 
 export default router;

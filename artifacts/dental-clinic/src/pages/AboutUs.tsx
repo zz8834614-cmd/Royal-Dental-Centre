@@ -4,6 +4,7 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Heart, Award, Users, Clock, Stethoscope } from "lucide-react";
 import logoPath from "@assets/logo_dentaire_1776084221665.png";
+import { useQuery } from "@tanstack/react-query";
 
 const values = [
   { icon: Shield, en: "Trust & Safety", ar: "الثقة والأمان", descEn: "We prioritize patient safety with the highest sterilization standards and modern infection control protocols.", descAr: "نعطي الأولوية لسلامة المرضى بأعلى معايير التعقيم وبروتوكولات مكافحة العدوى الحديثة." },
@@ -14,15 +15,14 @@ const values = [
   { icon: Stethoscope, en: "Comprehensive Services", ar: "خدمات شاملة", descEn: "From routine cleanings to complex implants and orthodontics, all your dental needs under one roof.", descAr: "من التنظيف الروتيني إلى الزراعات المعقدة وتقويم الأسنان، جميع احتياجاتك في مكان واحد." },
 ];
 
-const teamMembers = [
-  { name: "Dr. Ahmed Benali", nameAr: "د. أحمد بن علي", role: "Lead Dentist & Founder", roleAr: "طبيب أسنان رئيسي ومؤسس", descEn: "Over 15 years of experience in cosmetic and restorative dentistry.", descAr: "أكثر من 15 عاماً من الخبرة في طب الأسنان التجميلي والترميمي." },
-  { name: "Dr. Leila Kaddour", nameAr: "د. ليلى قدور", role: "Orthodontist", roleAr: "أخصائية تقويم الأسنان", descEn: "Specialist in orthodontics and teeth alignment with modern techniques.", descAr: "أخصائية في تقويم الأسنان ومحاذاة الأسنان بالتقنيات الحديثة." },
-  { name: "Dr. Youssef Hamdi", nameAr: "د. يوسف حمدي", role: "Oral Surgeon", roleAr: "جراح الفم", descEn: "Expert in dental implants and oral surgery procedures.", descAr: "خبير في زراعة الأسنان وإجراءات جراحة الفم." },
-];
-
 export default function AboutUs() {
   const { t, language } = useI18n();
   const isAr = language === "ar";
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["/api/team"],
+    queryFn: () => fetch("/api/team").then(r => r.json()),
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,25 +105,31 @@ export default function AboutUs() {
         </section>
 
         {/* Team */}
-        <section className="py-16 container px-4 md:px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            {isAr ? "فريقنا الطبي" : "Our Medical Team"}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {teamMembers.map((member, i) => (
-              <Card key={i} className="overflow-hidden text-center">
-                <CardContent className="p-8 space-y-4">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <Stethoscope className="h-10 w-10 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold">{isAr ? member.nameAr : member.name}</h3>
-                  <p className="text-sm font-medium text-primary">{isAr ? member.roleAr : member.role}</p>
-                  <p className="text-sm text-muted-foreground">{isAr ? member.descAr : member.descEn}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
+        {teamMembers.length > 0 && (
+          <section className="py-16 container px-4 md:px-6">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              {isAr ? "فريقنا الطبي" : "Our Medical Team"}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {teamMembers.map((member: any) => (
+                <Card key={member.id} className="overflow-hidden text-center">
+                  <CardContent className="p-8 space-y-4">
+                    <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <Stethoscope className="h-10 w-10 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold">{member.firstName} {member.lastName}</h3>
+                    {member.speciality && (
+                      <p className="text-sm font-medium text-primary">{member.speciality}</p>
+                    )}
+                    {member.bio && (
+                      <p className="text-sm text-muted-foreground leading-relaxed">{member.bio}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Working Hours & Contact */}
         <section className="py-16 bg-primary/5">
