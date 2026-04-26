@@ -1,17 +1,29 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { useListServices, useListReviews, useListAnnouncements } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   Star, ArrowRight, Sparkles, Phone, Mail, MapPin, Clock,
   Brush, CircleDot, SmilePlus, Sun, Wrench, Syringe, Stethoscope, type LucideIcon,
-  Shield, Award, Heart, Users,
+  Shield, Award, Heart, Users, CalendarCheck,
 } from "lucide-react";
 import { DentalLogo } from "@/components/ui/DentalLogo";
+
+const TIME_SLOTS = [
+  "09:00","09:30","10:00","10:30","11:00","11:30",
+  "12:00","12:30","14:00","14:30","15:00","15:30",
+  "16:00","16:30","17:00","17:30",
+];
 
 function Logo3D() {
   return (
@@ -49,6 +61,46 @@ export default function Landing() {
     staleTime: 60_000,
   });
   const isAr = language === "ar";
+  const { toast } = useToast();
+
+  const [showBooking, setShowBooking] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingDone, setBookingDone] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    firstName: "", lastName: "", phone: "",
+    serviceId: "", date: "", time: "", notes: "",
+  });
+
+  const openBooking = (serviceId?: string) => {
+    setBookingForm(f => ({ ...f, serviceId: serviceId ?? f.serviceId }));
+    setBookingDone(false);
+    setShowBooking(true);
+  };
+
+  const handleBooking = async () => {
+    const { firstName, lastName, phone, serviceId, date, time } = bookingForm;
+    if (!firstName || !lastName || !phone || !serviceId || !date || !time) {
+      toast({ title: isAr ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    setBookingLoading(true);
+    try {
+      const res = await fetch("/api/appointments/public", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingForm),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed");
+      }
+      setBookingDone(true);
+    } catch (e: any) {
+      toast({ title: isAr ? "خطأ في الحجز" : "Booking error", description: e.message, variant: "destructive" });
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   const particles = useMemo(() =>
     Array.from({ length: 15 }).map(() => ({
@@ -129,11 +181,9 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-wrap gap-3 justify-center mb-8">
-              <Button size="lg" className="h-12 md:h-14 px-6 md:px-8 text-sm md:text-base rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all group" asChild>
-                <Link href="/login">
-                  {t("hero.book")}
-                  <ArrowRight className={`w-4 h-4 ${isAr ? "mr-2 rotate-180" : "ml-2"} group-hover:translate-x-1 transition-transform`} />
-                </Link>
+              <Button size="lg" className="h-12 md:h-14 px-6 md:px-8 text-sm md:text-base rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all group" onClick={() => openBooking()}>
+                {t("hero.book")}
+                <ArrowRight className={`w-4 h-4 ${isAr ? "mr-2 rotate-180" : "ml-2"} group-hover:translate-x-1 transition-transform`} />
               </Button>
               <Button size="lg" variant="outline" className="h-12 md:h-14 px-6 md:px-8 text-sm md:text-base rounded-2xl glass-button" asChild>
                 <Link href="/about">
@@ -207,11 +257,9 @@ export default function Landing() {
                           {service.price} {isAr ? "د.ج" : "DZD"}
                         </p>
                       )}
-                      <Button className="w-full rounded-xl h-10 text-sm group-hover:shadow-lg group-hover:shadow-primary/20 transition-all" asChild>
-                        <Link href="/login">
-                          {isAr ? "احجز الآن" : "Book Now"}
-                          <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "mr-1.5 rotate-180" : "ml-1.5"}`} />
-                        </Link>
+                      <Button className="w-full rounded-xl h-10 text-sm group-hover:shadow-lg group-hover:shadow-primary/20 transition-all" onClick={() => openBooking(String(service.id))}>
+                        {isAr ? "احجز الآن" : "Book Now"}
+                        <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "mr-1.5 rotate-180" : "ml-1.5"}`} />
                       </Button>
                     </div>
                   </div>
@@ -407,8 +455,8 @@ export default function Landing() {
                   <p className="text-muted-foreground text-sm">
                     {isAr ? "ابتسامتك ثروتك" : "Your Smile is Your Treasure"}
                   </p>
-                  <Button size="lg" className="h-12 px-8 text-sm rounded-2xl shadow-lg shadow-primary/25" asChild>
-                    <Link href="/login">{t("hero.book")}</Link>
+                  <Button size="lg" className="h-12 px-8 text-sm rounded-2xl shadow-lg shadow-primary/25" onClick={() => openBooking()}>
+                    {t("hero.book")}
                   </Button>
                 </div>
               </div>
@@ -427,6 +475,134 @@ export default function Landing() {
         </div>
       </footer>
       <WhatsAppButton />
+
+      {/* Booking Dialog */}
+      <Dialog open={showBooking} onOpenChange={open => { if (!open) { setShowBooking(false); setBookingDone(false); } }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <CalendarCheck className="h-5 w-5 text-primary" />
+              {isAr ? "حجز موعد" : "Book an Appointment"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {bookingDone ? (
+            <div className="py-8 text-center space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
+                <CalendarCheck className="h-8 w-8 text-green-500" />
+              </div>
+              <h3 className="text-xl font-bold text-green-600">
+                {isAr ? "تم الحجز بنجاح!" : "Appointment Booked!"}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {isAr
+                  ? "تم استلام طلبك. سيتصل بك فريقنا لتأكيد الموعد."
+                  : "Your request has been received. Our team will contact you to confirm."}
+              </p>
+              <Button onClick={() => { setShowBooking(false); setBookingDone(false); }}>
+                {isAr ? "حسناً" : "Done"}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? "الاسم *" : "First Name *"}</Label>
+                    <Input
+                      value={bookingForm.firstName}
+                      onChange={e => setBookingForm(f => ({ ...f, firstName: e.target.value }))}
+                      placeholder={isAr ? "محمد" : "John"}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? "اللقب *" : "Last Name *"}</Label>
+                    <Input
+                      value={bookingForm.lastName}
+                      onChange={e => setBookingForm(f => ({ ...f, lastName: e.target.value }))}
+                      placeholder={isAr ? "بن علي" : "Doe"}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">{isAr ? "رقم الهاتف *" : "Phone Number *"}</Label>
+                  <Input
+                    dir="ltr"
+                    value={bookingForm.phone}
+                    onChange={e => setBookingForm(f => ({ ...f, phone: e.target.value }))}
+                    placeholder="+213 5XX XXX XXX"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">{isAr ? "الخدمة *" : "Service *"}</Label>
+                  <Select value={bookingForm.serviceId} onValueChange={val => setBookingForm(f => ({ ...f, serviceId: val }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={isAr ? "اختر الخدمة" : "Select service"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(services ?? []).map((s: any) => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {isAr ? (s.nameAr || s.name) : s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? "التاريخ *" : "Date *"}</Label>
+                    <Input
+                      type="date"
+                      dir="ltr"
+                      min={new Date().toISOString().split("T")[0]}
+                      value={bookingForm.date}
+                      onChange={e => setBookingForm(f => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? "الوقت *" : "Time *"}</Label>
+                    <Select value={bookingForm.time} onValueChange={val => setBookingForm(f => ({ ...f, time: val }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isAr ? "الوقت" : "Time"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map(slot => (
+                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">{isAr ? "ملاحظات" : "Notes"}</Label>
+                  <Textarea
+                    value={bookingForm.notes}
+                    onChange={e => setBookingForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder={isAr ? "أي معلومات إضافية..." : "Any additional information..."}
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setShowBooking(false)}>
+                  {isAr ? "إلغاء" : "Cancel"}
+                </Button>
+                <Button onClick={handleBooking} disabled={bookingLoading} className="gap-1">
+                  <CalendarCheck className="h-4 w-4" />
+                  {bookingLoading
+                    ? (isAr ? "جارٍ الحجز..." : "Booking...")
+                    : (isAr ? "تأكيد الحجز" : "Confirm Booking")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

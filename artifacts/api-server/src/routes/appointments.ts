@@ -10,8 +10,70 @@ import {
   GetAvailableSlotsQueryParams,
 } from "@workspace/api-zod";
 import { authMiddleware } from "../middlewares/auth";
+import crypto from "crypto";
+
+function hashPassword(password: string): string {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
 const router: IRouter = Router();
+
+router.post("/appointments/public", async (req, res): Promise<void> => {
+  const { firstName, lastName, phone, serviceId, date, time, notes } = req.body;
+  if (!firstName || !lastName || !phone || !serviceId || !date || !time) {
+    res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+
+  const svcId = parseInt(serviceId, 10);
+  if (isNaN(svcId)) {
+    res.status(400).json({ error: "Invalid serviceId" });
+    return;
+  }
+
+  const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, svcId));
+  if (!service) {
+    res.status(400).json({ error: "Service not found" });
+    return;
+  }
+
+  const guestEmail = `guest_${phone.replace(/\D/g, "")}@royal-guest.com`;
+  let patient: typeof usersTable.$inferSelect;
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, guestEmail));
+  if (existing) {
+    await db.update(usersTable).set({ firstName, lastName, phone }).where(eq(usersTable.id, existing.id));
+    patient = { ...existing, firstName, lastName, phone };
+  } else {
+    const [created] = await db.insert(usersTable).values({
+      firstName,
+      lastName,
+      email: guestEmail,
+      password: hashPassword(phone),
+      phone,
+      role: "patient",
+    }).returning();
+    patient = created;
+  }
+
+  const doctors = await db.select().from(usersTable).where(eq(usersTable.role, "doctor"));
+  if (doctors.length === 0) {
+    res.status(503).json({ error: "No doctors available" });
+    return;
+  }
+  const doctor = doctors[0];
+
+  const [apt] = await db.insert(appointmentsTable).values({
+    patientId: patient.id,
+    doctorId: doctor.id,
+    serviceId: svcId,
+    date,
+    time,
+    notes: notes || null,
+    status: "pending",
+  }).returning();
+
+  res.status(201).json({ success: true, appointmentId: apt.id });
+});
 
 function formatAppointment(apt: any, patient: any, doctor: any, service: any) {
   return {
