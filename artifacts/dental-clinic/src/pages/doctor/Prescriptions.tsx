@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Trash2, Pill, Printer, FileText, Pencil, FileUp } from "lucide-react";
+import { Search, Plus, Trash2, Pill, Printer, FileText, Pencil, FileUp, Upload } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -149,6 +149,7 @@ export default function DoctorPrescriptions() {
 
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [pdfEditorTarget, setPdfEditorTarget] = useState<Prescription | null>(null);
+  const [showStandalonePdf, setShowStandalonePdf] = useState(false);
 
   const handleAddMedication = (medName: string) => {
     setItems([...items, { medicationName: medName, dosage: "", frequency: "", duration: "", quantity: "", instructions: "" }]);
@@ -337,6 +338,29 @@ export default function DoctorPrescriptions() {
           </Dialog>
         </div>
 
+        {/* PDF Template Editor — standalone section */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col sm:flex-row items-center gap-4 py-4">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">
+                  {isAr ? "محرر قالب الوصفة الطبية (PDF)" : "Prescription PDF Template Editor"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isAr ? "ارفع قالب الوصفة الخاص بعيادتك وضع بيانات المريض والأدوية على المناطق الصحيحة" : "Upload your clinic's prescription template and place patient data and medications in the right areas"}
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => setShowStandalonePdf(true)} className="gap-2 shrink-0">
+              <Upload className="h-4 w-4" />
+              {isAr ? "فتح المحرر" : "Open Editor"}
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-4 md:grid-cols-2">
           {prescriptions?.length === 0 ? (
             <Card className="col-span-full">
@@ -466,6 +490,24 @@ export default function DoctorPrescriptions() {
               onClose={() => setPdfEditorTarget(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Standalone PDF Template Editor Dialog */}
+      <Dialog open={showStandalonePdf} onOpenChange={setShowStandalonePdf}>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileUp className="h-5 w-5 text-primary" />
+              {isAr ? "محرر قالب الوصفة الطبية" : "Prescription PDF Template Editor"}
+            </DialogTitle>
+          </DialogHeader>
+          <PdfPrescriptionEditor
+            patientName=""
+            doctorName=""
+            initialMedications={[]}
+            onClose={() => setShowStandalonePdf(false)}
+          />
         </DialogContent>
       </Dialog>
 
