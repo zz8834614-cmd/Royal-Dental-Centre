@@ -107,9 +107,6 @@ export default function AboutUs() {
         {/* Team */}
         {teamMembers.length > 0 && (
           <section className="py-16 container px-4 md:px-6">
-            <h2 className="text-3xl font-bold text-center mb-12">
-              {isAr ? "فريقنا الطبي" : "Our Medical Team"}
-            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {teamMembers.map((member: any) => (
                 <Card key={member.id} className="overflow-hidden text-center">
