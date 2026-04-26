@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { useListUsers, useUpdateUser } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ interface AddForm {
 export default function AdminTeam() {
   const { language } = useI18n();
   const isAr = language === "ar";
+  const { user: currentUser } = useAuth();
   const { data: users, refetch } = useListUsers({}, { query: { refetchInterval: 5000, refetchOnMount: "always", staleTime: 0 } });
   const updateUser = useUpdateUser();
   const { toast } = useToast();
@@ -151,6 +153,7 @@ export default function AdminTeam() {
         throw new Error(err.error || "Failed");
       }
       await queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       await refetch();
       setDeleteId(null);
       toast({ title: isAr ? "تم الحذف بنجاح" : "Deleted successfully" });
@@ -282,10 +285,10 @@ export default function AdminTeam() {
                         <Button variant="outline" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => startEdit(user)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="destructive" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeleteId(user.id)}>
+                        <Button variant="destructive" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeleteId(user.id)} disabled={user.id === currentUser?.id}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
-                        <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val)}>
+                        <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val)} disabled={user.id === currentUser?.id}>
                           <SelectTrigger className="w-32">
                             <SelectValue />
                           </SelectTrigger>

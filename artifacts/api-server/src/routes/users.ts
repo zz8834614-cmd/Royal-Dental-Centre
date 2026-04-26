@@ -91,6 +91,12 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
+  // Prevent users from changing their own role
+  if (body.data.role !== undefined && req.userId === params.data.id) {
+    res.status(403).json({ error: "Cannot change your own role" });
+    return;
+  }
+
   const updateData: Record<string, unknown> = {};
   if (body.data.firstName !== undefined) updateData.firstName = body.data.firstName;
   if (body.data.lastName !== undefined) updateData.lastName = body.data.lastName;
@@ -143,6 +149,10 @@ router.delete("/users/:id", authMiddleware, requireRole("admin"), async (req, re
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  if (id === req.userId) {
+    res.status(403).json({ error: "Cannot delete your own account" });
     return;
   }
   const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, id)).returning();
