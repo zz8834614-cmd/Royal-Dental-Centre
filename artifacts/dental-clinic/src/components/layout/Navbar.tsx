@@ -159,11 +159,11 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
       {mobileOpen && (
       <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <div
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="absolute inset-0 bg-black/60 animate-in fade-in duration-100"
           onClick={closeMobile}
         />
 
-        <div ref={drawerRef} tabIndex={-1} className="absolute inset-y-0 start-0 w-[280px] bg-background/95 backdrop-blur-xl border-e border-border/50 shadow-2xl animate-in slide-in-from-left rtl:slide-in-from-right duration-300 flex flex-col outline-none">
+        <div ref={drawerRef} tabIndex={-1} className="absolute inset-y-0 start-0 w-[280px] bg-background border-e border-border/50 shadow-2xl animate-in slide-in-from-left rtl:slide-in-from-right duration-150 flex flex-col outline-none">
 
           <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-3">
