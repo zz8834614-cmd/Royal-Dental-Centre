@@ -8,7 +8,7 @@ import { useI18n } from "@/lib/i18n";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (data: LoginBody) => Promise<void>;
+  login: (data: LoginBody, redirectTo?: string) => Promise<void>;
   register: (data: RegisterBody) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const login = async (data: LoginBody) => {
+  const login = async (data: LoginBody, redirectTo?: string) => {
     try {
       const result = await loginMutation.mutateAsync({ data });
       if (result.token) {
@@ -54,7 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refetch();
       toast({ title: t("auth.loginSuccess") });
       const role = result.user?.role || "patient";
-      setLocation(`/${role}/dashboard`);
+      if (redirectTo) {
+        setLocation(redirectTo);
+      } else if (sessionStorage.getItem("pendingBook") === "1") {
+        sessionStorage.removeItem("pendingBook");
+        sessionStorage.setItem("openBook", "1");
+        setLocation("/");
+      } else {
+        setLocation(`/${role}/dashboard`);
+      }
     } catch (error: any) {
       toast({ 
         title: t("auth.loginFailed"), 

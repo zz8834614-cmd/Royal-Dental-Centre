@@ -27,11 +27,11 @@ import {
   Newspaper,
 } from "lucide-react";
 
-export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
+export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBook?: () => void }) {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useI18n();
   const { theme, toggleTheme } = useTheme();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
@@ -115,11 +115,13 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <div className="flex items-center gap-1.5">
             {!user && !onMenuClick && (
-              <Button size="sm" className="hidden md:flex h-8 rounded-xl text-xs px-4 gap-1.5" asChild>
-                <Link href="/login">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {t("hero.book")}
-                </Link>
+              <Button
+                size="sm"
+                className="hidden md:flex h-8 rounded-xl text-xs px-4 gap-1.5"
+                onClick={onBook ?? (() => navigate("/login"))}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                {t("hero.book")}
               </Button>
             )}
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useI18n } from "@/lib/i18n";
 import { Navbar } from "@/components/layout/Navbar";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useListServices, useListReviews, useListAnnouncements } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { getStoredToken } from "@/lib/auth";
 import {
   Star, ArrowRight, Sparkles, Phone, Mail, MapPin, Clock,
   Brush, CircleDot, SmilePlus, Sun, Wrench, Syringe, Stethoscope, type LucideIcon,
@@ -52,6 +54,8 @@ const serviceIconMap: Record<string, LucideIcon> = {
 
 export default function Landing() {
   const { t, language } = useI18n();
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
   const { data: services } = useListServices();
   const { data: reviews } = useListReviews();
   const { data: announcements } = useListAnnouncements();
@@ -71,24 +75,62 @@ export default function Landing() {
     serviceId: "", date: "", time: "", notes: "",
   });
 
-  const openBooking = (serviceId?: string) => {
-    setBookingForm(f => ({ ...f, serviceId: serviceId ?? f.serviceId }));
+  const openBookingForUser = (serviceId?: string) => {
+    setBookingForm({
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      phone: (user as any)?.phone ?? "",
+      serviceId: serviceId ?? "",
+      date: "", time: "", notes: "",
+    });
     setBookingDone(false);
     setShowBooking(true);
   };
 
+  useEffect(() => {
+    if (user && sessionStorage.getItem("openBook") === "1") {
+      sessionStorage.removeItem("openBook");
+      openBookingForUser();
+    }
+  }, [user]);
+
+  const openBooking = (serviceId?: string) => {
+    if (!user) {
+      sessionStorage.setItem("pendingBook", "1");
+      navigate("/login");
+      return;
+    }
+    openBookingForUser(serviceId);
+  };
+
   const handleBooking = async () => {
     const { firstName, lastName, phone, serviceId, date, time } = bookingForm;
-    if (!firstName || !lastName || !phone || !serviceId || !date || !time) {
+    if (!serviceId || !date || !time) {
+      toast({ title: isAr ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    if (user && (!firstName || !lastName)) {
+      toast({ title: isAr ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    if (!user && (!firstName || !lastName || !phone)) {
       toast({ title: isAr ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields", variant: "destructive" });
       return;
     }
     setBookingLoading(true);
     try {
-      const res = await fetch("/api/appointments/public", {
+      const token = getStoredToken();
+      const endpoint = user ? "/api/appointments/book" : "/api/appointments/public";
+      const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingForm),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "x-user-id": token } : {}),
+        },
+        body: JSON.stringify(user
+          ? { serviceId: bookingForm.serviceId, date: bookingForm.date, time: bookingForm.time, notes: bookingForm.notes }
+          : bookingForm
+        ),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -119,7 +161,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
+      <Navbar onBook={() => openBooking()} />
       <main className="flex-1">
         <section className="hero-section relative overflow-hidden min-h-[90vh] md:min-h-screen flex flex-col items-center justify-center">
           {/* Background mosaic of dental clinic images */}
@@ -506,34 +548,47 @@ export default function Landing() {
           ) : (
             <>
               <div className="grid gap-4 py-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">{isAr ? "الاسم *" : "First Name *"}</Label>
-                    <Input
-                      value={bookingForm.firstName}
-                      onChange={e => setBookingForm(f => ({ ...f, firstName: e.target.value }))}
-                      placeholder={isAr ? "محمد" : "John"}
-                    />
+                {user ? (
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/5 border">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                      {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">{user.firstName} {user.lastName}</p>
+                      <p className="text-xs text-muted-foreground">{(user as any).phone || user.email}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">{isAr ? "اللقب *" : "Last Name *"}</Label>
-                    <Input
-                      value={bookingForm.lastName}
-                      onChange={e => setBookingForm(f => ({ ...f, lastName: e.target.value }))}
-                      placeholder={isAr ? "بن علي" : "Doe"}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">{isAr ? "رقم الهاتف *" : "Phone Number *"}</Label>
-                  <Input
-                    dir="ltr"
-                    value={bookingForm.phone}
-                    onChange={e => setBookingForm(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="+213 5XX XXX XXX"
-                  />
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">{isAr ? "الاسم *" : "First Name *"}</Label>
+                        <Input
+                          value={bookingForm.firstName}
+                          onChange={e => setBookingForm(f => ({ ...f, firstName: e.target.value }))}
+                          placeholder={isAr ? "محمد" : "John"}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">{isAr ? "اللقب *" : "Last Name *"}</Label>
+                        <Input
+                          value={bookingForm.lastName}
+                          onChange={e => setBookingForm(f => ({ ...f, lastName: e.target.value }))}
+                          placeholder={isAr ? "بن علي" : "Doe"}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{isAr ? "رقم الهاتف *" : "Phone Number *"}</Label>
+                      <Input
+                        dir="ltr"
+                        value={bookingForm.phone}
+                        onChange={e => setBookingForm(f => ({ ...f, phone: e.target.value }))}
+                        placeholder="+213 5XX XXX XXX"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? "الخدمة *" : "Service *"}</Label>

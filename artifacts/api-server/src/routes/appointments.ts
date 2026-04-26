@@ -18,6 +18,34 @@ function hashPassword(password: string): string {
 
 const router: IRouter = Router();
 
+router.post("/appointments/book", authMiddleware, async (req, res): Promise<void> => {
+  const { serviceId, date, time, notes } = req.body;
+  if (!serviceId || !date || !time) {
+    res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+  const svcId = parseInt(serviceId, 10);
+  if (isNaN(svcId)) { res.status(400).json({ error: "Invalid serviceId" }); return; }
+  const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, svcId));
+  if (!service) { res.status(400).json({ error: "Service not found" }); return; }
+
+  const doctors = await db.select().from(usersTable).where(eq(usersTable.role, "doctor"));
+  if (doctors.length === 0) { res.status(503).json({ error: "No doctors available" }); return; }
+  const doctor = doctors[0];
+
+  const [apt] = await db.insert(appointmentsTable).values({
+    patientId: req.userId!,
+    doctorId: doctor.id,
+    serviceId: svcId,
+    date,
+    time,
+    notes: notes || null,
+    status: "pending",
+  }).returning();
+
+  res.status(201).json({ success: true, appointmentId: apt.id });
+});
+
 router.post("/appointments/public", async (req, res): Promise<void> => {
   const { firstName, lastName, phone, serviceId, date, time, notes } = req.body;
   if (!firstName || !lastName || !phone || !serviceId || !date || !time) {
