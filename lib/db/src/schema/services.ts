@@ -11,6 +11,7 @@ export const servicesTable = pgTable("services", {
   duration: integer("duration").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

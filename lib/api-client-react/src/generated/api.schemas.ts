@@ -47,6 +47,10 @@ export interface User {
   /** @nullable */
   dateOfBirth?: string | null;
   isSubscribed?: boolean;
+  /** @nullable */
+  speciality?: string | null;
+  /** @nullable */
+  bio?: string | null;
   createdAt: string;
 }
 
@@ -62,6 +66,8 @@ export interface UpdateUserBody {
   dateOfBirth?: string;
   role?: UserRole;
   isSubscribed?: boolean;
+  speciality?: string | null;
+  bio?: string | null;
 }
 
 export interface Service {
@@ -73,6 +79,8 @@ export interface Service {
   duration: number;
   price: number;
   isActive: boolean;
+  /** @nullable */
+  imageUrl?: string | null;
   createdAt: string;
 }
 
@@ -83,6 +91,7 @@ export interface CreateServiceBody {
   descriptionAr: string;
   duration: number;
   price: number;
+  imageUrl?: string;
 }
 
 export interface UpdateServiceBody {
@@ -93,6 +102,7 @@ export interface UpdateServiceBody {
   duration?: number;
   price?: number;
   isActive?: boolean;
+  imageUrl?: string | null;
 }
 
 export type AppointmentStatus =

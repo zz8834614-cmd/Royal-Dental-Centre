@@ -50,7 +50,11 @@ Auto-seed runs on every server start (`seed.ts`). Creates default admin/doctor/r
 - Doctor portal: patient directory with medical record management (view/add records), prescriptions with smart medication search and print/PDF, medication database CRUD, appointments management, chat
 - Admin panel: dashboard with stats/charts, services CRUD, team management, patient management (view/edit), announcements with image support, appointments management, chat, site settings (phone, email, address, about us, working hours)
 - Smart prescription builder: medication search from database, auto-add to prescription, printable PDF with clinic branding
+- **PDF Prescription Template Editor**: Doctor can upload any PDF prescription template, render it as background, drag-and-drop text fields (patient name, date, medications) to correct positions, then print or save the customized prescription
 - Medication database management with categories (antibiotic, painkiller, etc.)
+- **Service image URL**: Each service can have an optional image URL that displays on the landing page service cards and in admin
+- **Medical team profiles**: Doctors/admins can have speciality and bio fields (editable inline from admin panel); displayed in a dedicated team section on the landing page
+- **Public /api/team endpoint**: Returns doctor profiles with speciality/bio without authentication (for landing page visibility)
 - Smart booking system with service selection, doctor selection, available time slots
 - Chat/messaging system between patients and doctors
 - Notification system (notifications table + API)
@@ -119,7 +123,7 @@ Auto-seed runs on every server start (`seed.ts`). Creates default admin/doctor/r
 
 ## Database Schema
 
-Tables: users, services, appointments, medical_records, medications, prescriptions, conversations, messages, announcements (with image_url), reviews, notifications, site_settings
+Tables: users (with speciality, bio fields), services (with image_url), appointments, medical_records, medications, prescriptions, conversations, messages, announcements (with image_url), reviews, notifications, site_settings
 
 ## i18n
 

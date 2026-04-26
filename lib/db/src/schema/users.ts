@@ -14,6 +14,8 @@ export const usersTable = pgTable("users", {
   medicalHistory: text("medical_history"),
   allergies: text("allergies"),
   isSubscribed: text("is_subscribed").notNull().default("false"),
+  speciality: text("speciality"),
+  bio: text("bio"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

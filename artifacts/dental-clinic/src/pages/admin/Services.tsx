@@ -18,9 +18,10 @@ interface ServiceForm {
   descriptionAr: string;
   price: string;
   duration: string;
+  imageUrl: string;
 }
 
-const emptyForm: ServiceForm = { name: "", nameAr: "", description: "", descriptionAr: "", price: "", duration: "" };
+const emptyForm: ServiceForm = { name: "", nameAr: "", description: "", descriptionAr: "", price: "", duration: "", imageUrl: "" };
 
 export default function AdminServices() {
   const { t, language } = useI18n();
@@ -44,6 +45,7 @@ export default function AdminServices() {
         descriptionAr: form.descriptionAr || undefined,
         price: form.price ? parseFloat(form.price) : undefined,
         duration: form.duration ? parseInt(form.duration) : undefined,
+        imageUrl: form.imageUrl || undefined,
       };
 
       if (editingId) {
@@ -71,6 +73,7 @@ export default function AdminServices() {
       descriptionAr: service.descriptionAr || "",
       price: service.price ? String(service.price) : "",
       duration: service.duration ? String(service.duration) : "",
+      imageUrl: service.imageUrl || "",
     });
     setEditingId(service.id);
     setShowForm(true);
@@ -132,6 +135,19 @@ export default function AdminServices() {
                   <Label>{t("admin.duration")}</Label>
                   <Input type="number" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} dir="ltr" />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>{isAr ? "رابط صورة الخدمة (اختياري)" : "Service Image URL (optional)"}</Label>
+                  <Input
+                    type="url"
+                    value={form.imageUrl}
+                    onChange={e => setForm({...form, imageUrl: e.target.value})}
+                    placeholder={isAr ? "https://example.com/image.jpg" : "https://example.com/image.jpg"}
+                    dir="ltr"
+                  />
+                  {form.imageUrl && (
+                    <img src={form.imageUrl} alt="preview" className="h-24 w-full object-cover rounded-lg border mt-1" onError={e => (e.currentTarget.style.display = "none")} />
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 mt-6">
                 <Button onClick={handleSave} disabled={!form.name}>
@@ -169,8 +185,12 @@ export default function AdminServices() {
           {services?.map(service => (
             <Card key={service.id} className="group">
               <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Stethoscope className="h-6 w-6 text-primary" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                  {service.imageUrl ? (
+                    <img src={service.imageUrl} alt={service.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display="none"; }} />
+                  ) : (
+                    <Stethoscope className="h-6 w-6 text-primary" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold">{isAr ? (service.nameAr || service.name) : service.name}</h3>

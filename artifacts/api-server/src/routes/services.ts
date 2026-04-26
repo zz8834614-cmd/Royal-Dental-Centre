@@ -17,6 +17,7 @@ router.get("/services", async (_req, res): Promise<void> => {
     duration: s.duration,
     price: Number(s.price),
     isActive: s.isActive,
+    imageUrl: s.imageUrl,
     createdAt: s.createdAt.toISOString(),
   })));
 });
@@ -36,6 +37,7 @@ router.post("/services", authMiddleware, requireRole("doctor", "admin"), async (
     duration: parsed.data.duration,
     price: String(parsed.data.price),
     isActive: true,
+    imageUrl: parsed.data.imageUrl ?? null,
   }).returning();
 
   res.status(201).json({
@@ -47,6 +49,7 @@ router.post("/services", authMiddleware, requireRole("doctor", "admin"), async (
     duration: service.duration,
     price: Number(service.price),
     isActive: service.isActive,
+    imageUrl: service.imageUrl,
     createdAt: service.createdAt.toISOString(),
   });
 });
@@ -72,6 +75,7 @@ router.patch("/services/:id", authMiddleware, requireRole("doctor", "admin"), as
   if (body.data.duration !== undefined) updateData.duration = body.data.duration;
   if (body.data.price !== undefined) updateData.price = String(body.data.price);
   if (body.data.isActive !== undefined) updateData.isActive = body.data.isActive;
+  if ("imageUrl" in body.data) updateData.imageUrl = body.data.imageUrl ?? null;
 
   const [service] = await db.update(servicesTable).set(updateData).where(eq(servicesTable.id, params.data.id)).returning();
   if (!service) {
@@ -88,6 +92,7 @@ router.patch("/services/:id", authMiddleware, requireRole("doctor", "admin"), as
     duration: service.duration,
     price: Number(service.price),
     isActive: service.isActive,
+    imageUrl: service.imageUrl,
     createdAt: service.createdAt.toISOString(),
   });
 });

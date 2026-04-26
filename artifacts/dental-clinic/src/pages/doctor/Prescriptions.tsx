@@ -39,10 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Trash2, Pill, Printer, FileText, Pencil } from "lucide-react";
+import { Search, Plus, Trash2, Pill, Printer, FileText, Pencil, FileUp } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { PdfPrescriptionEditor } from "@/components/doctor/PdfPrescriptionEditor";
 
 function printPrescription(prescription: Prescription, isAr: boolean) {
   const patient = prescription.patientName || "";
@@ -147,6 +148,7 @@ export default function DoctorPrescriptions() {
   const [editNotes, setEditNotes] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [pdfEditorTarget, setPdfEditorTarget] = useState<Prescription | null>(null);
 
   const handleAddMedication = (medName: string) => {
     setItems([...items, { medicationName: medName, dosage: "", frequency: "", duration: "", quantity: "", instructions: "" }]);
@@ -351,10 +353,14 @@ export default function DoctorPrescriptions() {
                     <CardTitle className="text-lg">{prescription.patientName}</CardTitle>
                     <CardDescription>{format(new Date(prescription.createdAt), "yyyy-MM-dd HH:mm")}</CardDescription>
                   </div>
-                  <div className="flex gap-1 shrink-0">
+                  <div className="flex gap-1 shrink-0 flex-wrap justify-end">
                     <Button variant="outline" size="sm" onClick={() => printPrescription(prescription, isAr)}>
                       <Printer className="h-4 w-4 me-1" />
                       {isAr ? "طباعة" : "Print"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setPdfEditorTarget(prescription)} className="gap-1 text-primary border-primary/40 hover:bg-primary/5">
+                      <FileUp className="h-4 w-4" />
+                      {isAr ? "قالب PDF" : "PDF Template"}
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(prescription)}>
                       <Pencil className="h-4 w-4" />
@@ -435,6 +441,31 @@ export default function DoctorPrescriptions() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Template Editor */}
+      <Dialog open={pdfEditorTarget !== null} onOpenChange={(open) => !open && setPdfEditorTarget(null)}>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileUp className="h-5 w-5 text-primary" />
+              {isAr ? `قالب الوصفة — ${pdfEditorTarget?.patientName}` : `PDF Template — ${pdfEditorTarget?.patientName}`}
+            </DialogTitle>
+          </DialogHeader>
+          {pdfEditorTarget && (
+            <PdfPrescriptionEditor
+              patientName={pdfEditorTarget.patientName || ""}
+              doctorName={pdfEditorTarget.doctorName || ""}
+              initialMedications={pdfEditorTarget.items.map(i => ({
+                medicationName: i.medicationName,
+                dosage: i.dosage,
+                frequency: i.frequency,
+                duration: i.duration,
+              }))}
+              onClose={() => setPdfEditorTarget(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

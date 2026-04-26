@@ -87,6 +87,8 @@ export const ListUsersResponseItem = zod.object({
   role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
   dateOfBirth: zod.string().nullish(),
   isSubscribed: zod.boolean().optional(),
+  speciality: zod.string().nullish(),
+  bio: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
@@ -123,6 +125,8 @@ export const UpdateUserBody = zod.object({
   dateOfBirth: zod.string().optional(),
   role: zod.enum(["patient", "doctor", "admin", "receptionist"]).optional(),
   isSubscribed: zod.boolean().optional(),
+  speciality: zod.string().optional().nullable(),
+  bio: zod.string().optional().nullable(),
 });
 
 export const UpdateUserResponse = zod.object({
@@ -134,6 +138,8 @@ export const UpdateUserResponse = zod.object({
   role: zod.enum(["patient", "doctor", "admin", "receptionist"]),
   dateOfBirth: zod.string().nullish(),
   isSubscribed: zod.boolean().optional(),
+  speciality: zod.string().nullish(),
+  bio: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -149,6 +155,7 @@ export const ListServicesResponseItem = zod.object({
   duration: zod.number(),
   price: zod.number(),
   isActive: zod.boolean(),
+  imageUrl: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const ListServicesResponse = zod.array(ListServicesResponseItem);
@@ -163,6 +170,7 @@ export const CreateServiceBody = zod.object({
   descriptionAr: zod.string(),
   duration: zod.number(),
   price: zod.number(),
+  imageUrl: zod.string().optional(),
 });
 
 /**
@@ -180,6 +188,7 @@ export const UpdateServiceBody = zod.object({
   duration: zod.number().optional(),
   price: zod.number().optional(),
   isActive: zod.boolean().optional(),
+  imageUrl: zod.string().optional().nullable(),
 });
 
 export const UpdateServiceResponse = zod.object({
@@ -191,6 +200,7 @@ export const UpdateServiceResponse = zod.object({
   duration: zod.number(),
   price: zod.number(),
   isActive: zod.boolean(),
+  imageUrl: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 

@@ -6,6 +6,24 @@ import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
+router.get("/team", async (_req, res): Promise<void> => {
+  const doctors = await db.select().from(usersTable).where(
+    eq(usersTable.role, "doctor")
+  );
+  const admins = await db.select().from(usersTable).where(
+    eq(usersTable.role, "admin")
+  );
+  const all = [...doctors, ...admins].filter(u => u.speciality || u.bio);
+  res.json(all.map(u => ({
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    role: u.role,
+    speciality: u.speciality,
+    bio: u.bio,
+  })));
+});
+
 function formatUser(u: any) {
   return {
     id: u.id,
@@ -16,6 +34,8 @@ function formatUser(u: any) {
     role: u.role,
     dateOfBirth: u.dateOfBirth,
     isSubscribed: u.isSubscribed === "true",
+    speciality: u.speciality,
+    bio: u.bio,
     createdAt: u.createdAt.toISOString(),
   };
 }
@@ -71,6 +91,9 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
   if (body.data.lastName !== undefined) updateData.lastName = body.data.lastName;
   if (body.data.phone !== undefined) updateData.phone = body.data.phone;
   if (body.data.dateOfBirth !== undefined) updateData.dateOfBirth = body.data.dateOfBirth;
+
+  if ("speciality" in body.data) updateData.speciality = body.data.speciality ?? null;
+  if ("bio" in body.data) updateData.bio = body.data.bio ?? null;
 
   // Only admin/receptionist can change role and subscription
   if (req.userRole === "admin" || req.userRole === "receptionist") {

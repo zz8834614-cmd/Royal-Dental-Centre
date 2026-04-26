@@ -5,6 +5,7 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useListServices, useListReviews, useListAnnouncements } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Star, ArrowRight, Sparkles, Phone, Mail, MapPin, Clock,
   Brush, CircleDot, SmilePlus, Sun, Wrench, Syringe, Stethoscope, type LucideIcon,
@@ -42,6 +43,11 @@ export default function Landing() {
   const { data: services } = useListServices();
   const { data: reviews } = useListReviews();
   const { data: announcements } = useListAnnouncements();
+  const { data: teamDoctors = [] } = useQuery<{ id: number; firstName: string; lastName: string; role: string; speciality?: string | null; bio?: string | null }[]>({
+    queryKey: ["/api/team"],
+    queryFn: () => fetch("/api/team").then(r => r.json()),
+    staleTime: 60_000,
+  });
   const isAr = language === "ar";
 
   const particles = useMemo(() =>
@@ -179,10 +185,17 @@ export default function Landing() {
                 const ServiceIcon = serviceIconMap[serviceName] || serviceIconMap[service.name] || Stethoscope;
                 return (
                   <div key={service.id} className="glass-card group" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="p-5 md:p-7 space-y-4">
-                      <div className="service-icon-3d">
-                        <ServiceIcon className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                    {service.imageUrl && (
+                      <div className="w-full h-40 overflow-hidden rounded-t-2xl">
+                        <img src={service.imageUrl} alt={serviceName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={e => (e.currentTarget.parentElement!.style.display = "none")} />
                       </div>
+                    )}
+                    <div className="p-5 md:p-7 space-y-4">
+                      {!service.imageUrl && (
+                        <div className="service-icon-3d">
+                          <ServiceIcon className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                        </div>
+                      )}
                       <h3 className="text-base md:text-lg font-bold group-hover:text-primary transition-colors">
                         {serviceName}
                       </h3>
@@ -231,6 +244,52 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        {teamDoctors.length > 0 && (
+          <section className="py-16 md:py-24 relative">
+            <div className="container px-4 md:px-6">
+              <div className="text-center mb-10 md:mb-16 space-y-3">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  {isAr ? "فريقنا الطبي" : "Our Medical Team"}
+                </span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">
+                  {isAr ? "أطباؤنا المتخصصون" : "Meet Our Specialists"}
+                </h2>
+                <p className="text-sm md:text-base text-muted-foreground max-w-[600px] mx-auto">
+                  {isAr
+                    ? "نخبة من الأطباء المتخصصين لضمان أفضل رعاية لأسنانك"
+                    : "An elite team of specialists to ensure the best dental care"}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {teamDoctors.map((doctor, index) => (
+                  <div key={doctor.id} className="glass-card group text-center" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <div className="p-6 md:p-8 space-y-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto border-2 border-primary/20 shadow-lg">
+                        <span className="text-2xl font-bold text-primary">
+                          {doctor.firstName.charAt(0)}{doctor.lastName.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
+                          {isAr ? "د." : "Dr."} {doctor.firstName} {doctor.lastName}
+                        </h3>
+                        {doctor.speciality && (
+                          <p className="text-sm font-medium text-primary/80 mt-1">{doctor.speciality}</p>
+                        )}
+                      </div>
+                      {doctor.bio && (
+                        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                          {doctor.bio}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {announcements && announcements.length > 0 && (
           <section className="py-16 md:py-24 relative">
