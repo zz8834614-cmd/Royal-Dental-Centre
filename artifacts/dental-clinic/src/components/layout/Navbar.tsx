@@ -156,23 +156,15 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
         </div>
       </header>
 
-      <div
-        className={`fixed inset-0 z-[100] md:hidden transition-all duration-200 ${mobileOpen ? "visible" : "invisible pointer-events-none"}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation menu"
-        aria-hidden={!mobileOpen}
-      >
+      {mobileOpen && (
+      <div className="fixed inset-0 z-[100] md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <div
-          className={`absolute inset-0 bg-black/60 transition-opacity duration-200 ${mobileOpen ? "opacity-100" : "opacity-0"}`}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={closeMobile}
         />
 
-        <div
-          ref={drawerRef}
-          tabIndex={-1}
-          className={`absolute inset-y-0 start-0 w-[280px] bg-background border-e border-border/50 shadow-2xl flex flex-col outline-none transition-transform duration-200 ease-out ${mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}`}
-        >
+        <div ref={drawerRef} tabIndex={-1} className="absolute inset-y-0 start-0 w-[280px] bg-background/95 backdrop-blur-xl border-e border-border/50 shadow-2xl animate-in slide-in-from-left rtl:slide-in-from-right duration-300 flex flex-col outline-none">
+
           <div className="flex items-center justify-between p-4 border-b border-border/50">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="Royal Dental Centre" className="w-10 h-10 object-contain navbar-logo" />
@@ -211,7 +203,7 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                  className={`flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                     isActive(link.href)
                       ? "bg-primary/10 text-primary font-semibold"
                       : "text-foreground/80 active:bg-muted"
@@ -236,7 +228,7 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
                 </div>
                 <Link
                   href={`/${user.role}/dashboard`}
-                  className="flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm text-foreground/80 active:bg-muted transition-colors"
+                  className="flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm text-foreground/80 active:bg-muted transition-all"
                 >
                   <LayoutDashboard className="h-5 w-5" />
                   {t("nav.dashboard")}
@@ -244,7 +236,7 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
                 {(user.role === "admin" || user.role === "doctor") && (
                   <Link
                     href={`/${user.role}/services`}
-                    className="flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm text-foreground/80 active:bg-muted transition-colors"
+                    className="flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm text-foreground/80 active:bg-muted transition-all"
                   >
                     <Settings className="h-5 w-5" />
                     {t("nav.management")}
@@ -283,6 +275,7 @@ export function Navbar({ onMenuClick, onBook }: { onMenuClick?: () => void; onBo
           </div>
         </div>
       </div>
+      )}
     </>
   );
 }
