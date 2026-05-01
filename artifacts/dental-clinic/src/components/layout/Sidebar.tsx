@@ -18,6 +18,8 @@ import {
   LogOut,
   User,
   ListOrdered,
+  DollarSign,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -57,6 +59,7 @@ export function Sidebar() {
     { href: "/admin/appointments", label: t("nav.appointments"), icon: CalendarDays },
     { href: "/admin/prescriptions", label: language === "ar" ? "الوصفات" : "Prescriptions", icon: Pill },
     { href: "/admin/announcements", label: t("nav.announcements"), icon: Megaphone },
+    { href: "/admin/finance", label: language === "ar" ? "المحاسبة" : "Finance", icon: DollarSign },
     { href: "/admin/chat", label: t("nav.messages"), icon: MessageSquare },
     { href: "/admin/settings", label: t("nav.settings"), icon: Settings },
     { href: "/admin/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
@@ -65,6 +68,7 @@ export function Sidebar() {
   const receptionistLinks = [
     { href: "/receptionist/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/receptionist/queue", label: language === "ar" ? "قائمة الانتظار" : "Queue", icon: ListOrdered },
+    { href: "/receptionist/billing", label: language === "ar" ? "الفوترة والمدفوعات" : "Billing", icon: Wallet },
     { href: "/receptionist/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 

@@ -37,9 +37,11 @@ import AdminAnnouncements from "@/pages/admin/Announcements";
 import AdminPatients from "@/pages/admin/Patients";
 import AdminSettings from "@/pages/admin/Settings";
 import AdminPrescriptions from "@/pages/admin/Prescriptions";
+import AdminFinance from "@/pages/admin/Finance";
 
 import ReceptionistDashboard from "@/pages/receptionist/Dashboard";
 import ReceptionistQueue from "@/pages/receptionist/Queue";
+import ReceptionistBilling from "@/pages/receptionist/Billing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,11 +90,13 @@ function Router() {
       <Route path="/admin/patients" component={AdminPatients} />
       <Route path="/admin/prescriptions" component={AdminPrescriptions} />
       <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/finance" component={AdminFinance} />
       <Route path="/admin/profile" component={Profile} />
       <Route path="/admin/chat" component={Chat} />
       
       <Route path="/receptionist/dashboard" component={ReceptionistDashboard} />
       <Route path="/receptionist/queue" component={ReceptionistQueue} />
+      <Route path="/receptionist/billing" component={ReceptionistBilling} />
       <Route path="/receptionist/profile" component={Profile} />
       
       <Route component={NotFound} />

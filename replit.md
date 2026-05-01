@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 4 user roles (patient, doctor, admin, receptionist), appointment booking, medical records, smart prescriptions with PDF/print and quantity field, medication database, chat messaging, reviews, notifications, site settings, and bilingual Arabic/English support with RTL.
+A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 4 user roles (patient, doctor, admin, receptionist), appointment booking, medical records, smart prescriptions with PDF/print and quantity field, medication database, chat messaging, reviews, notifications, site settings, financial management (invoices/payments), and bilingual Arabic/English support with RTL.
 
 ## Stack
 
