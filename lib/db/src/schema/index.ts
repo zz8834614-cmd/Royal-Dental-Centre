@@ -10,3 +10,4 @@ export * from "./reviews";
 export * from "./notifications";
 export * from "./settings";
 export * from "./billing";
+export * from "./schedule";

@@ -1,13 +1,12 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
-import { db, usersTable, servicesTable, appointmentsTable, notificationsTable } from "@workspace/db";
+import { db, usersTable, servicesTable, appointmentsTable, notificationsTable, scheduleSettingsTable, scheduleBlocksTable } from "@workspace/db";
 import {
   ListAppointmentsQueryParams,
   CreateAppointmentBody,
   GetAppointmentParams,
   UpdateAppointmentParams,
   UpdateAppointmentBody,
-  GetAvailableSlotsQueryParams,
 } from "@workspace/api-zod";
 import { authMiddleware } from "../middlewares/auth";
 import crypto from "crypto";
@@ -112,9 +111,11 @@ function formatAppointment(apt: any, patient: any, doctor: any, service: any) {
     date: apt.date,
     time: apt.time,
     status: apt.status,
+    visitStatus: apt.visitStatus ?? "not_arrived",
     notes: apt.notes,
     queuePosition: apt.queuePosition ?? null,
     patientName: `${patient.firstName} ${patient.lastName}`,
+    patientPhone: patient.phone ?? null,
     doctorName: `${doctor.firstName} ${doctor.lastName}`,
     serviceName: service.name,
     patientIsSubscribed: patient.isSubscribed === "true",
@@ -203,6 +204,74 @@ router.post("/appointments", authMiddleware, async (req, res): Promise<void> => 
   res.status(201).json(formatAppointment(apt, patient, doctor, service));
 });
 
+function generateSlots(openTime: string, closeTime: string, slotMinutes: number): string[] {
+  const slots: string[] = [];
+  const [oh, om] = openTime.split(":").map(Number);
+  const [ch, cm] = closeTime.split(":").map(Number);
+  let cur = oh * 60 + om;
+  const end = ch * 60 + cm;
+  while (cur + slotMinutes <= end) {
+    const h = String(Math.floor(cur / 60)).padStart(2, "0");
+    const m = String(cur % 60).padStart(2, "0");
+    slots.push(`${h}:${m}`);
+    cur += slotMinutes;
+  }
+  return slots;
+}
+
+router.get("/appointments/available-slots", async (req, res): Promise<void> => {
+  const { date, doctorId } = req.query as { date?: string; doctorId?: string };
+  if (!date || !doctorId) {
+    res.status(400).json({ error: "date and doctorId are required" });
+    return;
+  }
+  const docId = parseInt(doctorId, 10);
+  if (isNaN(docId)) { res.status(400).json({ error: "Invalid doctorId" }); return; }
+
+  const dateObj = new Date(date + "T00:00:00");
+  const dayOfWeek = dateObj.getDay();
+
+  const [daySetting] = await db.select().from(scheduleSettingsTable)
+    .where(eq(scheduleSettingsTable.dayOfWeek, dayOfWeek));
+
+  const isOpen = daySetting?.isOpen ?? true;
+  const openTime = daySetting?.openTime ?? "09:00";
+  const closeTime = daySetting?.closeTime ?? "17:30";
+  const slotDuration = daySetting?.slotDuration ?? 30;
+
+  if (!isOpen) { res.json([]); return; }
+
+  const [fullDayBlock] = await db.select().from(scheduleBlocksTable)
+    .where(and(eq(scheduleBlocksTable.blockedDate, date), eq(scheduleBlocksTable.isFullDay, true)));
+  if (fullDayBlock) { res.json([]); return; }
+
+  const partialBlocks = await db.select().from(scheduleBlocksTable)
+    .where(and(eq(scheduleBlocksTable.blockedDate, date), eq(scheduleBlocksTable.isFullDay, false)));
+
+  const booked = await db.select({ time: appointmentsTable.time })
+    .from(appointmentsTable)
+    .where(and(
+      eq(appointmentsTable.doctorId, docId),
+      eq(appointmentsTable.date, date),
+      sql`${appointmentsTable.status} != 'cancelled'`
+    ));
+
+  const bookedTimes = new Set(booked.map(b => b.time));
+  const allSlots = generateSlots(openTime, closeTime, slotDuration);
+
+  res.json(allSlots.map(time => {
+    const [h, m] = time.split(":").map(Number);
+    const slotMin = h * 60 + m;
+    const blocked = partialBlocks.some(block => {
+      if (!block.startTime || !block.endTime) return false;
+      const [bsh, bsm] = block.startTime.split(":").map(Number);
+      const [beh, bem] = block.endTime.split(":").map(Number);
+      return slotMin >= bsh * 60 + bsm && slotMin < beh * 60 + bem;
+    });
+    return { time, available: !bookedTimes.has(time) && !blocked };
+  }));
+});
+
 router.get("/appointments/:id", authMiddleware, async (req, res): Promise<void> => {
   const params = GetAppointmentParams.safeParse(req.params);
   if (!params.success) {
@@ -253,13 +322,14 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
     }
   }
 
-  // Receptionist can only update status and queuePosition
+  // Receptionist can only update status, queuePosition and visitStatus
   const updateData: Record<string, unknown> = {};
   if (body.data.status !== undefined) updateData.status = body.data.status;
   if (body.data.notes !== undefined) updateData.notes = body.data.notes;
   if (body.data.date !== undefined && req.userRole !== "receptionist") updateData.date = body.data.date;
   if (body.data.time !== undefined && req.userRole !== "receptionist") updateData.time = body.data.time;
   if (body.data.queuePosition !== undefined) updateData.queuePosition = body.data.queuePosition;
+  if ((req.body as any).visitStatus !== undefined) updateData.visitStatus = (req.body as any).visitStatus;
 
   const [apt] = await db.update(appointmentsTable).set(updateData).where(eq(appointmentsTable.id, params.data.id)).returning();
   if (!apt) {
@@ -286,34 +356,6 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
   }
 
   res.json(formatAppointment(apt, patient, doctor, service));
-});
-
-router.get("/appointments/available-slots", async (req, res): Promise<void> => {
-  const params = GetAvailableSlotsQueryParams.safeParse(req.query);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-
-  const booked = await db.select({ time: appointmentsTable.time })
-    .from(appointmentsTable)
-    .where(and(
-      eq(appointmentsTable.doctorId, params.data.doctorId),
-      eq(appointmentsTable.date, params.data.date),
-      sql`${appointmentsTable.status} != 'cancelled'`
-    ));
-
-  const bookedTimes = new Set(booked.map(b => b.time));
-  const allSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "14:00", "14:30", "15:00", "15:30",
-    "16:00", "16:30", "17:00", "17:30"
-  ];
-
-  res.json(allSlots.map(time => ({
-    time,
-    available: !bookedTimes.has(time),
-  })));
 });
 
 export default router;

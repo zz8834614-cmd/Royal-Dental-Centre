@@ -20,6 +20,8 @@ import {
   ListOrdered,
   DollarSign,
   Wallet,
+  CalendarClock,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -68,7 +70,10 @@ export function Sidebar() {
   const receptionistLinks = [
     { href: "/receptionist/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/receptionist/queue", label: language === "ar" ? "قائمة الانتظار" : "Queue", icon: ListOrdered },
+    { href: "/receptionist/patients", label: language === "ar" ? "المرضى" : "Patients", icon: Users },
+    { href: "/receptionist/schedule", label: language === "ar" ? "جدول الحجوزات" : "Schedule", icon: CalendarClock },
     { href: "/receptionist/billing", label: language === "ar" ? "الفوترة والمدفوعات" : "Billing", icon: Wallet },
+    { href: "/receptionist/chat", label: language === "ar" ? "الدردشة" : "Messages", icon: MessageSquare },
     { href: "/receptionist/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];
 

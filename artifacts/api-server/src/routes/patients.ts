@@ -6,7 +6,7 @@ import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-router.get("/patients", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
+router.get("/patients", authMiddleware, requireRole("doctor", "admin", "receptionist"), async (req, res): Promise<void> => {
   const params = ListPatientsQueryParams.safeParse(req.query);
 
   const conditions = [eq(usersTable.role, "patient")];

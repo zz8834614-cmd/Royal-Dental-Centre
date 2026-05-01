@@ -121,10 +121,16 @@ router.patch("/users/:id", authMiddleware, async (req, res): Promise<void> => {
   res.json(formatUser(user));
 });
 
-router.post("/users", authMiddleware, requireRole("admin"), async (req, res): Promise<void> => {
-  const { firstName, lastName, email, password, role, speciality, bio, phone } = req.body;
+router.post("/users", authMiddleware, requireRole("admin", "receptionist"), async (req, res): Promise<void> => {
+  const { firstName, lastName, email, password, role, speciality, bio, phone, dateOfBirth } = req.body;
   if (!firstName || !lastName || !email || !password) {
     res.status(400).json({ error: "firstName, lastName, email and password are required" });
+    return;
+  }
+  // Receptionists can only create patients
+  const assignedRole = role ?? "patient";
+  if (req.userRole === "receptionist" && assignedRole !== "patient") {
+    res.status(403).json({ error: "Receptionists can only create patient accounts" });
     return;
   }
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
@@ -138,9 +144,10 @@ router.post("/users", authMiddleware, requireRole("admin"), async (req, res): Pr
     email,
     password: hashPassword(password),
     phone: phone ?? null,
-    role: role ?? "doctor",
+    role: assignedRole,
     speciality: speciality ?? null,
     bio: bio ?? null,
+    dateOfBirth: dateOfBirth ?? null,
   }).returning();
   res.status(201).json(formatUser(user));
 });

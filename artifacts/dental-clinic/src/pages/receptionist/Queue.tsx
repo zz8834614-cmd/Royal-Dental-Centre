@@ -17,8 +17,12 @@ import {
   Clock,
   Star,
   CalendarOff,
+  Armchair,
+  Stethoscope,
+  CheckCheck,
+  UserX,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Appointment } from "@workspace/api-client-react";
@@ -32,20 +36,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { apiFetch } from "@/lib/api";
 
-function StatusBadge({ status, isAr }: { status: string; isAr: boolean }) {
-  const map: Record<string, { label: string; labelAr: string; className: string }> = {
-    pending: { label: "Pending", labelAr: "انتظار", className: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-    confirmed: { label: "Confirmed", labelAr: "مؤكد", className: "bg-green-100 text-green-800 border-green-300" },
-    completed: { label: "Completed", labelAr: "مكتمل", className: "bg-blue-100 text-blue-800 border-blue-300" },
-    cancelled: { label: "Cancelled", labelAr: "ملغى", className: "bg-red-100 text-red-800 border-red-300" },
+type VisitStatus = "not_arrived" | "waiting" | "in_consultation" | "done";
+
+function VisitStatusBadge({ status, isAr }: { status: VisitStatus; isAr: boolean }) {
+  const map: Record<VisitStatus, { label: string; labelAr: string; className: string; icon: React.ReactNode }> = {
+    not_arrived: {
+      label: "Not Arrived",
+      labelAr: "لم يصل",
+      className: "bg-slate-100 text-slate-600 border-slate-200",
+      icon: <UserX className="h-3 w-3" />,
+    },
+    waiting: {
+      label: "Waiting Room",
+      labelAr: "في غرفة الانتظار",
+      className: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      icon: <Armchair className="h-3 w-3" />,
+    },
+    in_consultation: {
+      label: "In Consultation",
+      labelAr: "في الجلسة",
+      className: "bg-blue-100 text-blue-700 border-blue-200",
+      icon: <Stethoscope className="h-3 w-3" />,
+    },
+    done: {
+      label: "Done",
+      labelAr: "انتهى",
+      className: "bg-green-100 text-green-700 border-green-200",
+      icon: <CheckCheck className="h-3 w-3" />,
+    },
   };
-  const m = map[status] || map.pending;
+  const m = map[status] ?? map.not_arrived;
   return (
-    <Badge variant="outline" className={`text-xs ${m.className}`}>
+    <Badge variant="outline" className={`text-xs gap-1 flex items-center ${m.className}`}>
+      {m.icon}
       {isAr ? m.labelAr : m.label}
     </Badge>
   );
+}
+
+const VISIT_CYCLE: VisitStatus[] = ["not_arrived", "waiting", "in_consultation", "done"];
+
+function nextVisitStatus(current: VisitStatus): VisitStatus {
+  const idx = VISIT_CYCLE.indexOf(current);
+  return VISIT_CYCLE[Math.min(idx + 1, VISIT_CYCLE.length - 1)];
 }
 
 export default function ReceptionistQueue() {
@@ -59,7 +94,52 @@ export default function ReceptionistQueue() {
   const updateUser = useUpdateUser();
 
   const [rejectTarget, setRejectTarget] = useState<number | null>(null);
+
+  // Schedule closed state backed by DB blocks
   const [scheduleClosed, setScheduleClosed] = useState(false);
+  const [scheduleBlockId, setScheduleBlockId] = useState<number | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  useEffect(() => {
+    const checkBlock = async () => {
+      try {
+        const blocks = await apiFetch(`/api/schedule/blocks?from=${today}&to=${today}`) as any[];
+        const todayBlock = blocks.find((b: any) => b.blockedDate === today && b.isFullDay);
+        if (todayBlock) {
+          setScheduleClosed(true);
+          setScheduleBlockId(todayBlock.id);
+        } else {
+          setScheduleClosed(false);
+          setScheduleBlockId(null);
+        }
+      } catch { /* ignore */ }
+    };
+    checkBlock();
+  }, [today]);
+
+  const toggleSchedule = async () => {
+    setScheduleLoading(true);
+    try {
+      if (scheduleClosed && scheduleBlockId) {
+        await apiFetch(`/api/schedule/blocks/${scheduleBlockId}`, { method: "DELETE" });
+        setScheduleClosed(false);
+        setScheduleBlockId(null);
+        toast({ title: isAr ? "تم فتح جدول الحجز لليوم" : "Schedule reopened for today" });
+      } else {
+        const block = await apiFetch("/api/schedule/blocks", {
+          method: "POST",
+          body: JSON.stringify({ blockedDate: today, isFullDay: true, reason: isAr ? "إغلاق يدوي" : "Manual closure" }),
+        }) as any;
+        setScheduleClosed(true);
+        setScheduleBlockId(block.id);
+        toast({ title: isAr ? "تم إغلاق جدول الحجز لليوم" : "Schedule closed for today" });
+      }
+    } catch {
+      toast({ title: isAr ? "فشل تحديث الجدول" : "Failed to update schedule", variant: "destructive" });
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
 
   const pending = appointments?.filter(a => a.status === "pending") ?? [];
   const queue = appointments
@@ -110,6 +190,19 @@ export default function ReceptionistQueue() {
     }
   };
 
+  const updateVisitStatus = async (appt: Appointment, visitStatus: VisitStatus) => {
+    try {
+      await apiFetch(`/api/appointments/${appt.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ visitStatus }),
+      });
+      toast({ title: isAr ? "تم تحديث الحالة" : "Status updated" });
+      refetch();
+    } catch {
+      toast({ title: isAr ? "فشل التحديث" : "Update failed", variant: "destructive" });
+    }
+  };
+
   const toggleSubscription = async (appt: Appointment) => {
     const currentVal = appt.patientIsSubscribed;
     try {
@@ -128,6 +221,14 @@ export default function ReceptionistQueue() {
     }
   };
 
+  // Visit status quick labels for the action button
+  const NEXT_LABEL: Record<VisitStatus, { en: string; ar: string; icon: React.ReactNode }> = {
+    not_arrived: { en: "Mark Arrived", ar: "وصل للانتظار", icon: <Armchair className="h-3 w-3" /> },
+    waiting: { en: "Start Session", ar: "ابدأ الجلسة", icon: <Stethoscope className="h-3 w-3" /> },
+    in_consultation: { en: "Mark Done", ar: "أنهِ الجلسة", icon: <CheckCheck className="h-3 w-3" /> },
+    done: { en: "Done", ar: "مكتمل", icon: <CheckCheck className="h-3 w-3" /> },
+  };
+
   return (
     <DashboardLayout allowedRoles={["receptionist"]}>
       <div className="space-y-6">
@@ -140,14 +241,8 @@ export default function ReceptionistQueue() {
           </div>
           <Button
             variant={scheduleClosed ? "destructive" : "outline"}
-            onClick={() => {
-              setScheduleClosed(!scheduleClosed);
-              toast({
-                title: scheduleClosed
-                  ? (isAr ? "تم فتح جدول الحجز" : "Schedule reopened")
-                  : (isAr ? "تم إغلاق جدول الحجز" : "Schedule closed for today"),
-              });
-            }}
+            onClick={toggleSchedule}
+            disabled={scheduleLoading}
           >
             <CalendarOff className="h-4 w-4 me-2" />
             {scheduleClosed
@@ -158,9 +253,35 @@ export default function ReceptionistQueue() {
 
         {scheduleClosed && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive font-medium">
-            {isAr ? "⚠ الجدول مغلق لليوم - لن يتمكن المرضى من حجز مواعيد جديدة" : "⚠ Schedule is closed for today"}
+            {isAr ? "⚠ الجدول مغلق لليوم - لن يتمكن المرضى من حجز مواعيد جديدة" : "⚠ Schedule is closed for today – no new bookings allowed"}
           </div>
         )}
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          <Card>
+            <CardContent className="pt-4 pb-3 text-center">
+              <div className="text-2xl font-bold text-yellow-600">{pending.length}</div>
+              <div className="text-xs text-muted-foreground">{isAr ? "طلبات معلقة" : "Pending"}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {queue.filter(a => (a as any).visitStatus === "in_consultation").length}
+              </div>
+              <div className="text-xs text-muted-foreground">{isAr ? "في الجلسة" : "In Session"}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3 text-center">
+              <div className="text-2xl font-bold text-yellow-500">
+                {queue.filter(a => (a as any).visitStatus === "waiting").length}
+              </div>
+              <div className="text-xs text-muted-foreground">{isAr ? "في الانتظار" : "Waiting"}</div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Pending requests */}
         <Card>
@@ -243,65 +364,92 @@ export default function ReceptionistQueue() {
               </p>
             ) : (
               <div className="space-y-2">
-                {queue.map((appt, idx) => (
-                  <div key={appt.id} className="flex items-center gap-3 p-3 rounded-lg border bg-green-50/40 dark:bg-green-950/10">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shrink-0">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold">{appt.patientName}</p>
-                        {appt.patientIsSubscribed && (
-                          <Badge variant="secondary" className="text-xs gap-1">
-                            <Star className="h-3 w-3" />
-                            {isAr ? "مشترك" : "Subscribed"}
-                          </Badge>
-                        )}
+                {queue.map((appt, idx) => {
+                  const visitStatus = ((appt as any).visitStatus ?? "not_arrived") as VisitStatus;
+                  const nextStatus = nextVisitStatus(visitStatus);
+                  const nextLabel = NEXT_LABEL[visitStatus];
+                  const isDone = visitStatus === "done";
+
+                  let cardBg = "bg-green-50/40 dark:bg-green-950/10";
+                  if (visitStatus === "waiting") cardBg = "bg-yellow-50/40 dark:bg-yellow-950/10";
+                  if (visitStatus === "in_consultation") cardBg = "bg-blue-50/40 dark:bg-blue-950/10";
+                  if (visitStatus === "done") cardBg = "bg-muted/30 opacity-70";
+
+                  return (
+                    <div key={appt.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border ${cardBg}`}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold">{appt.patientName}</p>
+                            {appt.patientIsSubscribed && (
+                              <Badge variant="secondary" className="text-xs gap-1">
+                                <Star className="h-3 w-3" />
+                                {isAr ? "مشترك" : "Subscribed"}
+                              </Badge>
+                            )}
+                            <VisitStatusBadge status={visitStatus} isAr={isAr} />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {appt.time} • Dr. {appt.doctorName} • {appt.serviceName}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {appt.time} • Dr. {appt.doctorName} • {appt.serviceName}
-                      </p>
+
+                      <div className="flex items-center gap-1 shrink-0 flex-wrap">
+                        {!isDone && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => updateVisitStatus(appt, nextStatus)}
+                          >
+                            {nextLabel.icon}
+                            {isAr ? nextLabel.ar : nextLabel.en}
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => toggleSubscription(appt)}
+                          title={isAr ? "تبديل الاشتراك" : "Toggle subscription"}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${appt.patientIsSubscribed ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => moveInQueue(appt, "up")}
+                          disabled={idx === 0 || updateAppointment.isPending}
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => moveInQueue(appt, "down")}
+                          disabled={idx === queue.length - 1 || updateAppointment.isPending}
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => setRejectTarget(appt.id)}
+                          disabled={updateAppointment.isPending}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => toggleSubscription(appt)}
-                        title={isAr ? "تبديل الاشتراك" : "Toggle subscription"}
-                      >
-                        <Star className={`h-3.5 w-3.5 ${appt.patientIsSubscribed ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => moveInQueue(appt, "up")}
-                        disabled={idx === 0 || updateAppointment.isPending}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => moveInQueue(appt, "down")}
-                        disabled={idx === queue.length - 1 || updateAppointment.isPending}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => setRejectTarget(appt.id)}
-                        disabled={updateAppointment.isPending}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -323,7 +471,9 @@ export default function ReceptionistQueue() {
                       <p className="text-sm font-medium">{appt.patientName}</p>
                       <p className="text-xs text-muted-foreground">{appt.time} • {appt.serviceName}</p>
                     </div>
-                    <StatusBadge status={appt.status} isAr={isAr} />
+                    <Badge variant="outline" className={`text-xs ${appt.status === "completed" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-red-50 text-red-700 border-red-200"}`}>
+                      {appt.status === "completed" ? (isAr ? "مكتمل" : "Completed") : (isAr ? "ملغى" : "Cancelled")}
+                    </Badge>
                   </div>
                 ))}
               </div>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 4 user roles (patient, doctor, admin, receptionist), appointment booking, medical records, smart prescriptions with PDF/print and quantity field, medication database, chat messaging, reviews, notifications, site settings, financial management (invoices/payments), and bilingual Arabic/English support with RTL.
+A comprehensive dental clinic management platform built as a pnpm workspace monorepo. Supports 4 user roles (patient, doctor, admin, receptionist), appointment booking, medical records, smart prescriptions with PDF/print and quantity field, medication database, chat messaging, reviews, notifications, site settings, financial management (invoices/payments), receptionist patient management, booking schedule control (DB-backed open/close per day + date blocks), patient visit status tracking (waiting/in-consultation/done), and bilingual Arabic/English support with RTL.
 
 ## Stack
 
@@ -118,12 +118,16 @@ Auto-seed runs on every server start (`seed.ts`). Creates default admin/doctor/r
 
 ### Receptionist Routes (role: receptionist)
 - `/receptionist/dashboard` — Reception overview (pending/confirmed counts, today's queue)
-- `/receptionist/queue` — Queue management: accept/reject pending appointments, reorder queue, toggle patient subscription, close schedule
+- `/receptionist/queue` — Queue management: accept/reject pending appointments, reorder queue, toggle patient subscription, close/open today's schedule (DB-backed via schedule_blocks), visit status tracking per patient (not arrived → waiting → in consultation → done)
+- `/receptionist/patients` — Patient management: view all patients (search by name/email/phone), add new patients, edit name/phone, toggle subscription
+- `/receptionist/schedule` — Booking schedule control: set daily open/close times and slot duration for each day of week, add/remove date-specific blocks (full day or partial hours)
+- `/receptionist/billing` — Invoice and payment management
+- `/receptionist/chat` — Chat with admin and doctor (filtered out patients)
 - `/receptionist/profile` — Edit name, phone
 
 ## Database Schema
 
-Tables: users (with speciality, bio fields), services (with image_url), appointments, medical_records, medications, prescriptions, conversations, messages, announcements (with image_url), reviews, notifications, site_settings
+Tables: users (with speciality, bio fields), services (with image_url), appointments (with visit_status enum: not_arrived/waiting/in_consultation/done), medical_records, medications, prescriptions, conversations, messages, announcements (with image_url), reviews, notifications, site_settings, invoices, payments, schedule_settings (per-day-of-week open/close times), schedule_blocks (date-specific full-day or partial-hour blocks)
 
 ## i18n
 

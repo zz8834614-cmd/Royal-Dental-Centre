@@ -67,7 +67,7 @@ export default function Billing() {
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices", "active"],
-    queryFn: () => apiFetch("/api/invoices").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/invoices"),
     refetchInterval: 30000,
   });
 
@@ -75,9 +75,8 @@ export default function Billing() {
     mutationFn: (data: { invoiceId: number; amount: number; method: string; notes: string }) =>
       apiFetch(`/api/invoices/${data.invoiceId}/payments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: data.amount, method: data.method, notes: data.notes }),
-      }).then((r) => r.json()),
+      }),
     onSuccess: (updated: Invoice) => {
       qc.invalidateQueries({ queryKey: ["/api/invoices"] });
       setSelectedInvoice(updated);

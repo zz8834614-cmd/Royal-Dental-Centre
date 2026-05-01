@@ -30,8 +30,11 @@ export default function Chat() {
   const sendMessage = useSendMessage();
   const createConversation = useCreateConversation();
 
-  const targetRole = user?.role === "patient" ? "doctor" : "patient";
-  const { data: availableUsers } = useListUsers({ role: targetRole });
+  const targetRole = user?.role === "patient" ? "doctor" : user?.role === "receptionist" ? undefined : "patient";
+  const { data: allUsers } = useListUsers(targetRole ? { role: targetRole } : {});
+  const availableUsers = user?.role === "receptionist"
+    ? allUsers?.filter(u => u.role === "admin" || u.role === "doctor")
+    : allUsers;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -42,6 +42,8 @@ import AdminFinance from "@/pages/admin/Finance";
 import ReceptionistDashboard from "@/pages/receptionist/Dashboard";
 import ReceptionistQueue from "@/pages/receptionist/Queue";
 import ReceptionistBilling from "@/pages/receptionist/Billing";
+import ReceptionistPatients from "@/pages/receptionist/Patients";
+import ReceptionistSchedule from "@/pages/receptionist/Schedule";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,7 +98,10 @@ function Router() {
       
       <Route path="/receptionist/dashboard" component={ReceptionistDashboard} />
       <Route path="/receptionist/queue" component={ReceptionistQueue} />
+      <Route path="/receptionist/patients" component={ReceptionistPatients} />
+      <Route path="/receptionist/schedule" component={ReceptionistSchedule} />
       <Route path="/receptionist/billing" component={ReceptionistBilling} />
+      <Route path="/receptionist/chat" component={Chat} />
       <Route path="/receptionist/profile" component={Profile} />
       
       <Route component={NotFound} />

@@ -116,7 +116,7 @@ export default function Finance() {
 
   const { data: summary } = useQuery<Summary>({
     queryKey: ["/api/invoices/summary"],
-    queryFn: () => apiFetch("/api/invoices/summary").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/invoices/summary"),
   });
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
@@ -124,20 +124,19 @@ export default function Finance() {
     queryFn: () => {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
-      return apiFetch(`/api/invoices?${params}`).then((r) => r.json());
+      return apiFetch(`/api/invoices?${params}`);
     },
   });
 
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
-    queryFn: () => apiFetch("/api/patients").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/patients"),
   });
 
   const createMutation = useMutation({
     mutationFn: (data: typeof createForm) =>
       apiFetch("/api/invoices", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patientId: Number(data.patientId),
           description: data.description,
@@ -145,7 +144,7 @@ export default function Finance() {
           notes: data.notes || undefined,
           dueDate: data.dueDate || undefined,
         }),
-      }).then((r) => r.json()),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/invoices"] });
       qc.invalidateQueries({ queryKey: ["/api/invoices/summary"] });
@@ -159,9 +158,8 @@ export default function Finance() {
     mutationFn: (data: { invoiceId: number; amount: number; method: string; notes: string }) =>
       apiFetch(`/api/invoices/${data.invoiceId}/payments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: data.amount, method: data.method, notes: data.notes }),
-      }).then((r) => r.json()),
+      }),
     onSuccess: (updated: Invoice) => {
       qc.invalidateQueries({ queryKey: ["/api/invoices"] });
       qc.invalidateQueries({ queryKey: ["/api/invoices/summary"] });
