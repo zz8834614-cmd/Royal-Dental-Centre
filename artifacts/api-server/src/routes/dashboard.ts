@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, sql, count, and, gte } from "drizzle-orm";
-import { db, usersTable, appointmentsTable, servicesTable, reviewsTable, notificationsTable } from "@workspace/db";
+import { eq, sql, count, and, gte, sum, inArray } from "drizzle-orm";
+import { db, usersTable, appointmentsTable, servicesTable, reviewsTable, notificationsTable, paymentsTable } from "@workspace/db";
 import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -11,23 +11,33 @@ router.get("/dashboard/stats", authMiddleware, requireRole("doctor", "admin"), a
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [totalPatients] = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.role, "patient"));
-  const [todayAppointments] = await db.select({ count: count() }).from(appointmentsTable).where(eq(appointmentsTable.date, today));
-  const [pendingAppointments] = await db.select({ count: count() }).from(appointmentsTable).where(eq(appointmentsTable.status, "pending"));
-  const [completedToday] = await db.select({ count: count() }).from(appointmentsTable).where(and(eq(appointmentsTable.date, today), eq(appointmentsTable.status, "completed")));
-  const [newPatientsThisMonth] = await db.select({ count: count() }).from(usersTable).where(and(eq(usersTable.role, "patient"), gte(usersTable.createdAt, monthStart)));
-  const [cancelledThisMonth] = await db.select({ count: count() }).from(appointmentsTable).where(and(eq(appointmentsTable.status, "cancelled"), gte(appointmentsTable.createdAt, monthStart)));
-
-  const avgRating = await db.select({ avg: sql<number>`COALESCE(AVG(${reviewsTable.rating}), 0)` }).from(reviewsTable);
-  const completedAppts = await db.select({ count: count() }).from(appointmentsTable).where(eq(appointmentsTable.status, "completed"));
+  const [
+    [totalPatients],
+    [todayAppointments],
+    [pendingAppointments],
+    [completedToday],
+    [newPatientsThisMonth],
+    [cancelledThisMonth],
+    avgRatingResult,
+    [totalRevenueResult],
+  ] = await Promise.all([
+    db.select({ count: count() }).from(usersTable).where(eq(usersTable.role, "patient")),
+    db.select({ count: count() }).from(appointmentsTable).where(eq(appointmentsTable.date, today)),
+    db.select({ count: count() }).from(appointmentsTable).where(eq(appointmentsTable.status, "pending")),
+    db.select({ count: count() }).from(appointmentsTable).where(and(eq(appointmentsTable.date, today), eq(appointmentsTable.status, "completed"))),
+    db.select({ count: count() }).from(usersTable).where(and(eq(usersTable.role, "patient"), gte(usersTable.createdAt, monthStart))),
+    db.select({ count: count() }).from(appointmentsTable).where(and(eq(appointmentsTable.status, "cancelled"), gte(appointmentsTable.createdAt, monthStart))),
+    db.select({ avg: sql<number>`COALESCE(AVG(${reviewsTable.rating}), 0)` }).from(reviewsTable),
+    db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable),
+  ]);
 
   res.json({
     totalPatients: totalPatients.count,
     todayAppointments: todayAppointments.count,
     pendingAppointments: pendingAppointments.count,
     completedToday: completedToday.count,
-    totalRevenue: Number(completedAppts[0].count) * 50,
-    averageRating: Number(avgRating[0].avg) || 0,
+    totalRevenue: Number(totalRevenueResult?.total ?? 0),
+    averageRating: Number(avgRatingResult[0]?.avg) || 0,
     newPatientsThisMonth: newPatientsThisMonth.count,
     cancelledThisMonth: cancelledThisMonth.count,
   });
@@ -42,34 +52,43 @@ router.get("/dashboard/appointments-by-service", authMiddleware, requireRole("do
     .from(appointmentsTable)
     .groupBy(appointmentsTable.serviceId);
 
-  const formatted = [];
-  for (const r of results) {
-    const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, r.serviceId));
-    formatted.push({
-      serviceName: service?.name ?? "Unknown",
-      count: r.count,
-    });
+  if (results.length === 0) {
+    res.json([]);
+    return;
   }
 
-  res.json(formatted);
+  const serviceIds = results.map(r => r.serviceId);
+  const services = await db.select().from(servicesTable).where(inArray(servicesTable.id, serviceIds));
+  const serviceMap = new Map(services.map(s => [s.id, s]));
+
+  res.json(results.map(r => ({
+    serviceName: serviceMap.get(r.serviceId)?.name ?? "Unknown",
+    count: r.count,
+  })));
 });
 
 router.get("/dashboard/recent-activity", authMiddleware, requireRole("doctor", "admin"), async (_req, res): Promise<void> => {
   const recentAppointments = await db.select().from(appointmentsTable)
     .orderBy(sql`${appointmentsTable.createdAt} DESC`).limit(10);
 
-  const activities = [];
-  let activityId = 1;
+  if (recentAppointments.length === 0) {
+    res.json([]);
+    return;
+  }
 
-  for (const apt of recentAppointments) {
-    const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, apt.patientId));
-    activities.push({
-      id: activityId++,
+  const patientIds = [...new Set(recentAppointments.map(a => a.patientId))];
+  const patients = await db.select().from(usersTable).where(inArray(usersTable.id, patientIds));
+  const patientMap = new Map(patients.map(p => [p.id, p]));
+
+  const activities = recentAppointments.map((apt, i) => {
+    const patient = patientMap.get(apt.patientId);
+    return {
+      id: i + 1,
       type: "appointment" as const,
       description: `${patient?.firstName ?? "Unknown"} ${patient?.lastName ?? ""} - ${apt.status} appointment on ${apt.date}`,
       timestamp: apt.createdAt.toISOString(),
-    });
-  }
+    };
+  });
 
   res.json(activities);
 });

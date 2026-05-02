@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { db, usersTable, servicesTable, appointmentsTable, notificationsTable, scheduleSettingsTable, scheduleBlocksTable } from "@workspace/db";
 import {
   ListAppointmentsQueryParams,
@@ -148,15 +148,29 @@ router.get("/appointments", authMiddleware, async (req, res): Promise<void> => {
     sql`${appointmentsTable.createdAt} DESC`
   );
 
-  const result = [];
-  for (const apt of appointments) {
-    const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, apt.patientId));
-    const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, apt.doctorId));
-    const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId));
-    if (patient && doctor && service) {
-      result.push(formatAppointment(apt, patient, doctor, service));
-    }
+  if (appointments.length === 0) {
+    res.json([]);
+    return;
   }
+
+  // Batch fetch related data to avoid N+1 queries
+  const patientIds = [...new Set(appointments.map(a => a.patientId))];
+  const doctorIds = [...new Set(appointments.map(a => a.doctorId))];
+  const serviceIds = [...new Set(appointments.map(a => a.serviceId))];
+
+  const [patients, doctors, services] = await Promise.all([
+    db.select().from(usersTable).where(inArray(usersTable.id, patientIds)),
+    db.select().from(usersTable).where(inArray(usersTable.id, doctorIds)),
+    db.select().from(servicesTable).where(inArray(servicesTable.id, serviceIds)),
+  ]);
+
+  const patientMap = new Map(patients.map(p => [p.id, p]));
+  const doctorMap = new Map(doctors.map(d => [d.id, d]));
+  const serviceMap = new Map(services.map(s => [s.id, s]));
+
+  const result = appointments
+    .filter(apt => patientMap.has(apt.patientId) && doctorMap.has(apt.doctorId) && serviceMap.has(apt.serviceId))
+    .map(apt => formatAppointment(apt, patientMap.get(apt.patientId)!, doctorMap.get(apt.doctorId)!, serviceMap.get(apt.serviceId)!));
 
   res.json(result);
 });
@@ -175,13 +189,13 @@ router.post("/appointments/by-receptionist", authMiddleware, requireRole("recept
     return;
   }
   const nextPos = (await db.select().from(appointmentsTable)
-    .where(and(eq(appointmentsTable.status, "confirmed"), eq(appointmentsTable.date, new Date(date))))
+    .where(and(eq(appointmentsTable.status, "confirmed"), eq(appointmentsTable.date, String(date))))
   ).length + 1;
   const [apt] = await db.insert(appointmentsTable).values({
     patientId: Number(patientId),
     doctorId: Number(doctorId),
     serviceId: Number(serviceId),
-    date: new Date(date),
+    date: String(date),
     time,
     notes: notes ?? null,
     status: "confirmed",
@@ -197,11 +211,6 @@ router.post("/appointments/by-receptionist", authMiddleware, requireRole("recept
 });
 
 router.post("/appointments", authMiddleware, async (req, res): Promise<void> => {
-  // Check if queue is closed
-  const closedSetting = await db.query?.siteSettingsTable?.findFirst?.({
-    where: (t: any, { eq }: any) => eq(t.key, "queue_closed")
-  }).catch(() => null);
-
   const parsed = CreateAppointmentBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -280,16 +289,17 @@ router.get("/appointments/available-slots", async (req, res): Promise<void> => {
     .where(and(eq(scheduleBlocksTable.blockedDate, date), eq(scheduleBlocksTable.isFullDay, true)));
   if (fullDayBlock) { res.json([]); return; }
 
-  const partialBlocks = await db.select().from(scheduleBlocksTable)
-    .where(and(eq(scheduleBlocksTable.blockedDate, date), eq(scheduleBlocksTable.isFullDay, false)));
-
-  const booked = await db.select({ time: appointmentsTable.time })
-    .from(appointmentsTable)
-    .where(and(
-      eq(appointmentsTable.doctorId, docId),
-      eq(appointmentsTable.date, date),
-      sql`${appointmentsTable.status} != 'cancelled'`
-    ));
+  const [partialBlocks, booked] = await Promise.all([
+    db.select().from(scheduleBlocksTable)
+      .where(and(eq(scheduleBlocksTable.blockedDate, date), eq(scheduleBlocksTable.isFullDay, false))),
+    db.select({ time: appointmentsTable.time })
+      .from(appointmentsTable)
+      .where(and(
+        eq(appointmentsTable.doctorId, docId),
+        eq(appointmentsTable.date, date),
+        sql`${appointmentsTable.status} != 'cancelled'`
+      )),
+  ]);
 
   const bookedTimes = new Set(booked.map(b => b.time));
   const allSlots = generateSlots(openTime, closeTime, slotDuration);
@@ -320,9 +330,11 @@ router.get("/appointments/:id", authMiddleware, async (req, res): Promise<void> 
     return;
   }
 
-  const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, apt.patientId));
-  const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, apt.doctorId));
-  const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId));
+  const [[patient], [doctor], [service]] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, apt.patientId)),
+    db.select().from(usersTable).where(eq(usersTable.id, apt.doctorId)),
+    db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId)),
+  ]);
 
   res.json(formatAppointment(apt, patient, doctor, service));
 });
@@ -357,7 +369,6 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
     }
   }
 
-  // Receptionist can only update status, queuePosition and visitStatus
   const updateData: Record<string, unknown> = {};
   if (body.data.status !== undefined) updateData.status = body.data.status;
   if (body.data.notes !== undefined) updateData.notes = body.data.notes;
@@ -372,9 +383,11 @@ router.patch("/appointments/:id", authMiddleware, async (req, res): Promise<void
     return;
   }
 
-  const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, apt.patientId));
-  const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, apt.doctorId));
-  const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId));
+  const [[patient], [doctor], [service]] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, apt.patientId)),
+    db.select().from(usersTable).where(eq(usersTable.id, apt.doctorId)),
+    db.select().from(servicesTable).where(eq(servicesTable.id, apt.serviceId)),
+  ]);
 
   if (body.data.status) {
     const statusMsg: Record<string, string> = {

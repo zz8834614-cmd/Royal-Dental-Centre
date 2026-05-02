@@ -1,22 +1,18 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, inArray } from "drizzle-orm";
 import { db, usersTable, prescriptionsTable, notificationsTable } from "@workspace/db";
 import { ListPrescriptionsQueryParams, CreatePrescriptionBody, GetPrescriptionParams, UpdatePrescriptionParams, UpdatePrescriptionBody } from "@workspace/api-zod";
 import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-async function formatPrescription(p: any) {
-  const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, p.patientId));
-  const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, p.doctorId));
-
+function buildPrescriptionResult(p: any, patient: any, doctor: any) {
   let patientAge: number | null = null;
   if (patient?.dateOfBirth) {
     const dob = new Date(patient.dateOfBirth);
     const today = new Date();
     patientAge = today.getFullYear() - dob.getFullYear();
   }
-
   return {
     id: p.id,
     patientId: p.patientId,
@@ -42,12 +38,25 @@ router.get("/prescriptions", authMiddleware, async (req, res): Promise<void> => 
   }
 
   const prescriptions = await query.orderBy(sql`${prescriptionsTable.createdAt} DESC`);
-  const result = [];
-  for (const p of prescriptions) {
-    result.push(await formatPrescription(p));
+
+  if (prescriptions.length === 0) {
+    res.json([]);
+    return;
   }
 
-  res.json(result);
+  // Batch fetch patients and doctors
+  const patientIds = [...new Set(prescriptions.map(p => p.patientId))];
+  const doctorIds = [...new Set(prescriptions.map(p => p.doctorId))];
+
+  const [patients, doctors] = await Promise.all([
+    db.select().from(usersTable).where(inArray(usersTable.id, patientIds)),
+    db.select().from(usersTable).where(inArray(usersTable.id, doctorIds)),
+  ]);
+
+  const patientMap = new Map(patients.map(u => [u.id, u]));
+  const doctorMap = new Map(doctors.map(u => [u.id, u]));
+
+  res.json(prescriptions.map(p => buildPrescriptionResult(p, patientMap.get(p.patientId), doctorMap.get(p.doctorId))));
 });
 
 router.post("/prescriptions", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
@@ -64,6 +73,11 @@ router.post("/prescriptions", authMiddleware, requireRole("doctor", "admin"), as
     notes: parsed.data.notes ?? null,
   }).returning();
 
+  const [patient, doctor] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, parsed.data.patientId)).then(r => r[0]),
+    db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).then(r => r[0]),
+  ]);
+
   await db.insert(notificationsTable).values({
     userId: parsed.data.patientId,
     title: "وصفة طبية جديدة",
@@ -71,7 +85,7 @@ router.post("/prescriptions", authMiddleware, requireRole("doctor", "admin"), as
     type: "prescription",
   });
 
-  res.status(201).json(await formatPrescription(prescription));
+  res.status(201).json(buildPrescriptionResult(prescription, patient, doctor));
 });
 
 router.get("/prescriptions/:id", authMiddleware, async (req, res): Promise<void> => {
@@ -87,7 +101,12 @@ router.get("/prescriptions/:id", authMiddleware, async (req, res): Promise<void>
     return;
   }
 
-  res.json(await formatPrescription(p));
+  const [patient, doctor] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, p.patientId)).then(r => r[0]),
+    db.select().from(usersTable).where(eq(usersTable.id, p.doctorId)).then(r => r[0]),
+  ]);
+
+  res.json(buildPrescriptionResult(p, patient, doctor));
 });
 
 router.patch("/prescriptions/:id", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {
@@ -120,7 +139,12 @@ router.patch("/prescriptions/:id", authMiddleware, requireRole("doctor", "admin"
 
   const [prescription] = await db.update(prescriptionsTable).set(updateData).where(eq(prescriptionsTable.id, params.data.id)).returning();
 
-  res.json(await formatPrescription(prescription));
+  const [patient, doctor] = await Promise.all([
+    db.select().from(usersTable).where(eq(usersTable.id, prescription.patientId)).then(r => r[0]),
+    db.select().from(usersTable).where(eq(usersTable.id, prescription.doctorId)).then(r => r[0]),
+  ]);
+
+  res.json(buildPrescriptionResult(prescription, patient, doctor));
 });
 
 router.delete("/prescriptions/:id", authMiddleware, requireRole("doctor", "admin"), async (req, res): Promise<void> => {

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, scheduleSettingsTable, scheduleBlocksTable } from "@workspace/db";
 import { authMiddleware, requireRole } from "../middlewares/auth";
 
@@ -30,7 +30,6 @@ router.get("/schedule", async (_req, res): Promise<void> => {
 
 router.get("/schedule/blocks", async (req, res): Promise<void> => {
   const { from, to } = req.query as { from?: string; to?: string };
-  let query = db.select().from(scheduleBlocksTable).$dynamic();
   const blocks = await db.select().from(scheduleBlocksTable).orderBy(scheduleBlocksTable.blockedDate);
   const filtered = blocks.filter((b) => {
     if (from && b.blockedDate < from) return false;

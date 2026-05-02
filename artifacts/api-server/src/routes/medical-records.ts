@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, usersTable, medicalRecordsTable } from "@workspace/db";
 import {
   ListMedicalRecordsQueryParams,
@@ -22,10 +22,19 @@ router.get("/medical-records", authMiddleware, async (req, res): Promise<void> =
     .where(eq(medicalRecordsTable.patientId, params.data.patientId))
     .orderBy(medicalRecordsTable.createdAt);
 
-  const result = [];
-  for (const r of records) {
-    const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, r.doctorId));
-    result.push({
+  if (records.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // Batch fetch doctors
+  const doctorIds = [...new Set(records.map(r => r.doctorId))];
+  const doctors = await db.select().from(usersTable).where(inArray(usersTable.id, doctorIds));
+  const doctorMap = new Map(doctors.map(d => [d.id, d]));
+
+  res.json(records.map(r => {
+    const doctor = doctorMap.get(r.doctorId);
+    return {
       id: r.id,
       patientId: r.patientId,
       doctorId: r.doctorId,
@@ -35,10 +44,8 @@ router.get("/medical-records", authMiddleware, async (req, res): Promise<void> =
       notes: r.notes,
       toothNumber: r.toothNumber,
       createdAt: r.createdAt.toISOString(),
-    });
-  }
-
-  res.json(result);
+    };
+  }));
 });
 
 router.post("/medical-records", authMiddleware, async (req, res): Promise<void> => {
@@ -63,7 +70,7 @@ router.post("/medical-records", authMiddleware, async (req, res): Promise<void> 
     id: record.id,
     patientId: record.patientId,
     doctorId: record.doctorId,
-    doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+    doctorName: doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : "Unknown",
     diagnosis: record.diagnosis,
     treatment: record.treatment,
     notes: record.notes,
@@ -97,7 +104,7 @@ router.patch("/medical-records/:id", authMiddleware, async (req, res): Promise<v
     id: record.id,
     patientId: record.patientId,
     doctorId: record.doctorId,
-    doctorName: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+    doctorName: doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : "Unknown",
     diagnosis: record.diagnosis,
     treatment: record.treatment,
     notes: record.notes,
