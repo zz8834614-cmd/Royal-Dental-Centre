@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
+import http from "http";
 import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -48,6 +49,19 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(frontendDist));
   app.get("/*path", (_req, res) => {
     res.sendFile(path.join(frontendDist, "index.html"));
+  });
+} else {
+  const VITE_PORT = 23961;
+  app.use((req, res) => {
+    const proxy = http.request(
+      { hostname: "localhost", port: VITE_PORT, path: req.url, method: req.method, headers: req.headers },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+        proxyRes.pipe(res, { end: true });
+      }
+    );
+    proxy.on("error", () => res.status(502).send("Vite dev server not reachable"));
+    req.pipe(proxy, { end: true });
   });
 }
 
