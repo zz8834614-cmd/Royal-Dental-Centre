@@ -1,24 +1,19 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useI18n } from "@/lib/i18n";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
-  Search, AlertCircle, CheckCircle, Clock, DollarSign,
-  CreditCard, Banknote, Plus, ChevronRight, Receipt,
+  Search, AlertCircle, CheckCircle, Clock, CreditCard,
+  Banknote, ChevronRight, Receipt, Printer,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 interface Payment {
@@ -57,37 +52,18 @@ const methodLabel: Record<string, { ar: string; en: string }> = {
 export default function Billing() {
   const { language } = useI18n();
   const isAr = language === "ar";
-  const qc = useQueryClient();
-  const { toast } = useToast();
 
   const [search, setSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({ amount: "", method: "cash", notes: "" });
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices", "active"],
     queryFn: () => apiFetch("/api/invoices"),
-    refetchInterval: 30000,
+    refetchInterval: 10000,
   });
 
-  const paymentMutation = useMutation({
-    mutationFn: (data: { invoiceId: number; amount: number; method: string; notes: string }) =>
-      apiFetch(`/api/invoices/${data.invoiceId}/payments`, {
-        method: "POST",
-        body: JSON.stringify({ amount: data.amount, method: data.method, notes: data.notes }),
-      }),
-    onSuccess: (updated: Invoice) => {
-      qc.invalidateQueries({ queryKey: ["/api/invoices"] });
-      setSelectedInvoice(updated);
-      setShowPaymentDialog(false);
-      setPaymentForm({ amount: "", method: "cash", notes: "" });
-      toast({ title: isAr ? "تم تسجيل الدفعة بنجاح" : "Payment recorded successfully" });
-    },
-  });
-
-  const active = invoices.filter((inv) =>
-    inv.status === "pending" || inv.status === "partial"
+  const active = invoices.filter(
+    (inv) => inv.status === "pending" || inv.status === "partial"
   );
 
   const filtered = active.filter((inv) => {
@@ -100,13 +76,66 @@ export default function Billing() {
 
   const totalOutstanding = active.reduce((sum, inv) => sum + inv.remainingAmount, 0);
 
+  const printInvoice = (inv: Invoice) => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const html = `
+      <!DOCTYPE html><html dir="${isAr ? "rtl" : "ltr"}">
+      <head><meta charset="UTF-8"><title>${isAr ? "فاتورة" : "Invoice"} #${inv.id}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #000; }
+        h1 { text-align: center; font-size: 24px; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 32px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 10px 14px; border: 1px solid #ddd; text-align: ${isAr ? "right" : "left"}; }
+        th { background: #f5f5f5; }
+        .summary { margin-top: 24px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+        .row { display: flex; justify-content: space-between; padding: 6px 0; }
+        .row.highlight { font-weight: bold; color: ${inv.remainingAmount > 0 ? "#e53e3e" : "#38a169"}; }
+        @media print { body { padding: 20px; } }
+      </style></head>
+      <body>
+      <h1>${isAr ? "مركز رويال للأسنان" : "Royal Dental Centre"}</h1>
+      <p class="subtitle">${isAr ? "فاتورة رقم" : "Invoice #"}${inv.id}</p>
+      <div class="summary">
+        <div class="row"><span>${isAr ? "المريض:" : "Patient:"}</span><span>${inv.patientName}</span></div>
+        ${inv.patientPhone ? `<div class="row"><span>${isAr ? "الهاتف:" : "Phone:"}</span><span>${inv.patientPhone}</span></div>` : ""}
+        <div class="row"><span>${isAr ? "الوصف:" : "Description:"}</span><span>${inv.description}</span></div>
+        <div class="row"><span>${isAr ? "التاريخ:" : "Date:"}</span><span>${format(new Date(inv.createdAt), "dd/MM/yyyy")}</span></div>
+        <hr/>
+        <div class="row"><span>${isAr ? "الإجمالي:" : "Total:"}</span><span>${inv.totalAmount.toFixed(2)} ${isAr ? "د.ج" : "DZD"}</span></div>
+        <div class="row"><span>${isAr ? "المدفوع:" : "Paid:"}</span><span style="color:#38a169">${inv.paidAmount.toFixed(2)} ${isAr ? "د.ج" : "DZD"}</span></div>
+        <div class="row highlight"><span>${isAr ? "المتبقي:" : "Remaining:"}</span><span>${inv.remainingAmount.toFixed(2)} ${isAr ? "د.ج" : "DZD"}</span></div>
+      </div>
+      ${inv.payments.length > 0 ? `
+      <h3>${isAr ? "سجل الدفعات" : "Payment History"}</h3>
+      <table>
+        <thead><tr>
+          <th>${isAr ? "المبلغ" : "Amount"}</th>
+          <th>${isAr ? "الطريقة" : "Method"}</th>
+          <th>${isAr ? "التاريخ" : "Date"}</th>
+        </tr></thead>
+        <tbody>${inv.payments.map((p) => `
+          <tr>
+            <td>${Number(p.amount).toFixed(2)} ${isAr ? "د.ج" : "DZD"}</td>
+            <td>${methodLabel[p.method]?.[isAr ? "ar" : "en"] ?? p.method}</td>
+            <td>${format(new Date(p.paymentDate), "dd/MM/yyyy HH:mm")}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>` : ""}
+      <script>window.onload=()=>{window.print();window.close();}</script>
+      </body></html>`;
+    win.document.write(html);
+    win.document.close();
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-5">
         <div>
           <h1 className="text-2xl font-bold">{isAr ? "المدفوعات وحسابات المرضى" : "Patient Billing"}</h1>
           <p className="text-muted-foreground text-sm">
-            {isAr ? "إدارة مدفوعات المرضى والفواتير المعلّقة" : "Manage patient payments and outstanding invoices"}
+            {isAr ? "عرض وطباعة فواتير المرضى" : "View and print patient invoices"}
           </p>
         </div>
 
@@ -221,7 +250,7 @@ export default function Billing() {
         )}
       </div>
 
-      {/* Invoice Detail Dialog */}
+      {/* Invoice Detail Dialog — View Only */}
       {selectedInvoice && (
         <Dialog open={true} onOpenChange={() => setSelectedInvoice(null)}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -248,6 +277,10 @@ export default function Billing() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{isAr ? "الخدمة:" : "Service:"}</span>
                   <span className="text-end max-w-[200px]">{selectedInvoice.description}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isAr ? "أُنشئ بواسطة:" : "Created by:"}</span>
+                  <span>{selectedInvoice.createdByName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{isAr ? "التاريخ:" : "Date:"}</span>
@@ -314,88 +347,14 @@ export default function Billing() {
               <Button variant="outline" onClick={() => setSelectedInvoice(null)}>
                 {isAr ? "إغلاق" : "Close"}
               </Button>
-              {selectedInvoice.remainingAmount > 0 && (
-                <Button onClick={() => setShowPaymentDialog(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  {isAr ? "تسجيل دفعة" : "Record Payment"}
-                </Button>
-              )}
+              <Button variant="outline" onClick={() => printInvoice(selectedInvoice)} className="gap-2">
+                <Printer className="h-4 w-4" />
+                {isAr ? "طباعة" : "Print"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
-
-      {/* Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{isAr ? "تسجيل دفعة" : "Record Payment"}</DialogTitle>
-          </DialogHeader>
-          {selectedInvoice && (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{isAr ? "المتبقي:" : "Remaining:"}</span>
-                  <span className="font-bold text-red-600">
-                    {selectedInvoice.remainingAmount.toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "المبلغ المستلم (د.ج)" : "Amount Received (DZD)"}</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max={selectedInvoice.remainingAmount}
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
-                />
-                <Button
-                  variant="ghost" size="sm" className="text-xs h-6 px-2"
-                  onClick={() => setPaymentForm((f) => ({ ...f, amount: String(selectedInvoice.remainingAmount) }))}
-                >
-                  {isAr ? "سداد المبلغ كاملاً" : "Pay full amount"}
-                </Button>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
-                <Select value={paymentForm.method} onValueChange={(v) => setPaymentForm((f) => ({ ...f, method: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">{isAr ? "نقد" : "Cash"}</SelectItem>
-                    <SelectItem value="card">{isAr ? "بطاقة" : "Card"}</SelectItem>
-                    <SelectItem value="insurance">{isAr ? "تأمين" : "Insurance"}</SelectItem>
-                    <SelectItem value="other">{isAr ? "أخرى" : "Other"}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "ملاحظات" : "Notes"}</Label>
-                <Input
-                  value={paymentForm.notes}
-                  onChange={(e) => setPaymentForm((f) => ({ ...f, notes: e.target.value }))}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
-              {isAr ? "إلغاء" : "Cancel"}
-            </Button>
-            <Button
-              onClick={() => paymentMutation.mutate({
-                invoiceId: selectedInvoice!.id,
-                amount: Number(paymentForm.amount),
-                method: paymentForm.method,
-                notes: paymentForm.notes,
-              })}
-              disabled={!paymentForm.amount || Number(paymentForm.amount) <= 0 || paymentMutation.isPending}
-            >
-              {paymentMutation.isPending ? (isAr ? "جاري..." : "Saving...") : (isAr ? "تأكيد الدفع" : "Confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 }

@@ -49,6 +49,7 @@ export function Sidebar() {
     { href: "/doctor/prescriptions", label: t("nav.prescriptions"), icon: Pill },
     { href: "/doctor/medications", label: t("nav.medications"), icon: Database },
     { href: "/doctor/services", label: t("nav.services"), icon: Stethoscope },
+    { href: "/doctor/finance", label: language === "ar" ? "الفواتير والمحاسبة" : "Invoices", icon: DollarSign },
     { href: "/doctor/chat", label: t("nav.messages"), icon: MessageSquare },
     { href: "/doctor/profile", label: language === "ar" ? "الملف الشخصي" : "Profile", icon: User },
   ];

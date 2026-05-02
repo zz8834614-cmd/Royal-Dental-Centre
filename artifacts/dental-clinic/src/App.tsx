@@ -29,6 +29,7 @@ import DoctorPatients from "@/pages/doctor/Patients";
 import DoctorAppointments from "@/pages/doctor/Appointments";
 import DoctorPrescriptions from "@/pages/doctor/Prescriptions";
 import DoctorMedications from "@/pages/doctor/Medications";
+import DoctorFinance from "@/pages/doctor/Finance";
 
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminServices from "@/pages/admin/Services";
@@ -81,6 +82,7 @@ function Router() {
       <Route path="/doctor/prescriptions" component={DoctorPrescriptions} />
       <Route path="/doctor/medications" component={DoctorMedications} />
       <Route path="/doctor/services" component={AdminServices} />
+      <Route path="/doctor/finance" component={DoctorFinance} />
       <Route path="/doctor/profile" component={Profile} />
       <Route path="/doctor/chat" component={Chat} />
       

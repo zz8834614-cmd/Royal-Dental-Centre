@@ -50,7 +50,7 @@ async function buildInvoiceResponse(invoice: typeof invoicesTable.$inferSelect) 
 router.get(
   "/invoices",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "receptionist", "doctor"),
   async (req, res): Promise<void> => {
     const { patientId, status } = req.query as { patientId?: string; status?: string };
 
@@ -71,7 +71,7 @@ router.get(
 router.get(
   "/invoices/summary",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "receptionist", "doctor"),
   async (_req, res): Promise<void> => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -123,7 +123,7 @@ router.get(
 router.get(
   "/invoices/:id",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "receptionist", "doctor"),
   async (req, res): Promise<void> => {
     const id = Number(req.params.id);
     const [invoice] = await db.select().from(invoicesTable).where(eq(invoicesTable.id, id));
@@ -135,10 +135,16 @@ router.get(
 router.post(
   "/invoices",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "doctor"),
   async (req, res): Promise<void> => {
-    const { patientId, description, totalAmount, notes, dueDate } = req.body as {
-      patientId: number; description: string; totalAmount: number; notes?: string; dueDate?: string;
+    const { patientId, description, totalAmount, paidAmount, paymentMethod, notes, dueDate } = req.body as {
+      patientId: number;
+      description: string;
+      totalAmount: number;
+      paidAmount?: number;
+      paymentMethod?: string;
+      notes?: string;
+      dueDate?: string;
     };
 
     if (!patientId || !description || !totalAmount) {
@@ -146,14 +152,32 @@ router.post(
       return;
     }
 
+    const total = Number(totalAmount);
+    const paid = Number(paidAmount ?? 0);
+    const status: "pending" | "partial" | "paid" =
+      paid >= total ? "paid" : paid > 0 ? "partial" : "pending";
+
     const [invoice] = await db.insert(invoicesTable).values({
       patientId,
       createdById: req.userId!,
       description,
-      totalAmount: String(totalAmount),
+      totalAmount: String(total),
+      paidAmount: String(paid),
+      status,
       notes: notes ?? null,
       dueDate: dueDate ? new Date(dueDate) : null,
     }).returning();
+
+    if (paid > 0) {
+      await db.insert(paymentsTable).values({
+        invoiceId: invoice.id,
+        amount: String(paid),
+        method: (paymentMethod ?? "cash") as "cash" | "card" | "insurance" | "other",
+        notes: null,
+        receivedById: req.userId!,
+        paymentDate: new Date(),
+      });
+    }
 
     res.status(201).json(await buildInvoiceResponse(invoice));
   }
@@ -162,7 +186,7 @@ router.post(
 router.patch(
   "/invoices/:id",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "doctor"),
   async (req, res): Promise<void> => {
     const id = Number(req.params.id);
     const { description, totalAmount, notes, dueDate, status } = req.body as {
@@ -198,7 +222,7 @@ router.delete(
 router.post(
   "/invoices/:id/payments",
   authMiddleware,
-  requireRole("admin", "receptionist"),
+  requireRole("admin", "doctor"),
   async (req, res): Promise<void> => {
     const invoiceId = Number(req.params.id);
     const { amount, method, notes } = req.body as { amount: number; method?: string; notes?: string };

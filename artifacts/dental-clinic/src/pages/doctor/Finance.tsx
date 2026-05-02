@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -20,8 +19,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DollarSign, TrendingUp, Clock, AlertCircle, Plus, Search,
-  Receipt, CreditCard, Banknote, ChevronRight, Printer, X,
+  DollarSign, Clock, AlertCircle, Plus, Search,
+  Receipt, CreditCard, Banknote, ChevronRight, Printer, TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -53,14 +52,6 @@ interface Invoice {
   payments: Payment[];
 }
 
-interface Summary {
-  todayIncome: number;
-  monthIncome: number;
-  totalRevenue: number;
-  outstandingAmount: number;
-  invoiceCounts: { pending: number; partial: number; paid: number; total: number };
-}
-
 interface Patient {
   id: number;
   firstName: string;
@@ -89,17 +80,16 @@ const methodLabel: Record<string, { ar: string; en: string }> = {
   other: { ar: "أخرى", en: "Other" },
 };
 
-export default function Finance() {
+export default function DoctorFinance() {
   const { language } = useI18n();
   const isAr = language === "ar";
   const qc = useQueryClient();
   const { toast } = useToast();
 
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const [createForm, setCreateForm] = useState({
     patientId: "",
@@ -108,17 +98,6 @@ export default function Finance() {
     paidAmount: "",
     paymentMethod: "cash",
     notes: "",
-    dueDate: "",
-  });
-  const [paymentForm, setPaymentForm] = useState({
-    amount: "",
-    method: "cash",
-    notes: "",
-  });
-
-  const { data: summary } = useQuery<Summary>({
-    queryKey: ["/api/invoices/summary"],
-    queryFn: () => apiFetch("/api/invoices/summary"),
   });
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
@@ -128,6 +107,7 @@ export default function Finance() {
       if (statusFilter !== "all") params.set("status", statusFilter);
       return apiFetch(`/api/invoices?${params}`);
     },
+    refetchInterval: 10000,
   });
 
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -146,31 +126,13 @@ export default function Finance() {
           paidAmount: Number(data.paidAmount || 0),
           paymentMethod: data.paymentMethod,
           notes: data.notes || undefined,
-          dueDate: data.dueDate || undefined,
         }),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/invoices"] });
-      qc.invalidateQueries({ queryKey: ["/api/invoices/summary"] });
       setShowCreateDialog(false);
-      setCreateForm({ patientId: "", description: "", totalAmount: "", paidAmount: "", paymentMethod: "cash", notes: "", dueDate: "" });
-      toast({ title: isAr ? "تم إنشاء الفاتورة" : "Invoice created" });
-    },
-  });
-
-  const paymentMutation = useMutation({
-    mutationFn: (data: { invoiceId: number; amount: number; method: string; notes: string }) =>
-      apiFetch(`/api/invoices/${data.invoiceId}/payments`, {
-        method: "POST",
-        body: JSON.stringify({ amount: data.amount, method: data.method, notes: data.notes }),
-      }),
-    onSuccess: (updated: Invoice) => {
-      qc.invalidateQueries({ queryKey: ["/api/invoices"] });
-      qc.invalidateQueries({ queryKey: ["/api/invoices/summary"] });
-      setSelectedInvoice(updated);
-      setShowPaymentDialog(false);
-      setPaymentForm({ amount: "", method: "cash", notes: "" });
-      toast({ title: isAr ? "تم تسجيل الدفعة" : "Payment recorded" });
+      setCreateForm({ patientId: "", description: "", totalAmount: "", paidAmount: "", paymentMethod: "cash", notes: "" });
+      toast({ title: isAr ? "تم إنشاء الفاتورة بنجاح" : "Invoice created successfully" });
     },
   });
 
@@ -180,6 +142,10 @@ export default function Finance() {
       inv.description.toLowerCase().includes(search.toLowerCase()) ||
       String(inv.id).includes(search);
   });
+
+  const totalVal = Number(createForm.totalAmount || 0);
+  const paidVal = Number(createForm.paidAmount || 0);
+  const remainingVal = Math.max(0, totalVal - paidVal);
 
   const printInvoice = (inv: Invoice) => {
     const win = window.open("", "_blank");
@@ -194,7 +160,6 @@ export default function Finance() {
         table { width: 100%; border-collapse: collapse; margin-top: 16px; }
         th, td { padding: 10px 14px; border: 1px solid #ddd; text-align: ${isAr ? "right" : "left"}; }
         th { background: #f5f5f5; }
-        .total-row td { font-weight: bold; background: #fafafa; }
         .summary { margin-top: 24px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
         .row { display: flex; justify-content: space-between; padding: 6px 0; }
         .row.highlight { font-weight: bold; color: ${inv.remainingAmount > 0 ? "#e53e3e" : "#38a169"}; }
@@ -208,7 +173,6 @@ export default function Finance() {
         ${inv.patientPhone ? `<div class="row"><span>${isAr ? "الهاتف:" : "Phone:"}</span><span>${inv.patientPhone}</span></div>` : ""}
         <div class="row"><span>${isAr ? "الوصف:" : "Description:"}</span><span>${inv.description}</span></div>
         <div class="row"><span>${isAr ? "التاريخ:" : "Date:"}</span><span>${format(new Date(inv.createdAt), "dd/MM/yyyy")}</span></div>
-        ${inv.dueDate ? `<div class="row"><span>${isAr ? "تاريخ الاستحقاق:" : "Due:"}</span><span>${format(new Date(inv.dueDate), "dd/MM/yyyy")}</span></div>` : ""}
         <hr/>
         <div class="row"><span>${isAr ? "الإجمالي:" : "Total:"}</span><span>${inv.totalAmount.toFixed(2)} ${isAr ? "د.ج" : "DZD"}</span></div>
         <div class="row"><span>${isAr ? "المدفوع:" : "Paid:"}</span><span style="color:#38a169">${inv.paidAmount.toFixed(2)} ${isAr ? "د.ج" : "DZD"}</span></div>
@@ -221,14 +185,12 @@ export default function Finance() {
           <th>${isAr ? "المبلغ" : "Amount"}</th>
           <th>${isAr ? "الطريقة" : "Method"}</th>
           <th>${isAr ? "التاريخ" : "Date"}</th>
-          <th>${isAr ? "ملاحظات" : "Notes"}</th>
         </tr></thead>
         <tbody>${inv.payments.map((p) => `
           <tr>
             <td>${Number(p.amount).toFixed(2)} ${isAr ? "د.ج" : "DZD"}</td>
             <td>${methodLabel[p.method]?.[isAr ? "ar" : "en"] ?? p.method}</td>
             <td>${format(new Date(p.paymentDate), "dd/MM/yyyy HH:mm")}</td>
-            <td>${p.notes ?? "-"}</td>
           </tr>`).join("")}
         </tbody>
       </table>` : ""}
@@ -245,10 +207,10 @@ export default function Finance() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">
-              {isAr ? "إدارة المحاسبة والمالية" : "Financial Management"}
+              {isAr ? "الفواتير والمحاسبة" : "Invoices & Billing"}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {isAr ? "تتبع الفواتير والمدفوعات والأرباح" : "Track invoices, payments, and revenue"}
+              {isAr ? "إنشاء وعرض فواتير المرضى" : "Create and view patient invoices"}
             </p>
           </div>
           <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
@@ -257,77 +219,13 @@ export default function Finance() {
           </Button>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{isAr ? "إيراد اليوم" : "Today"}</p>
-                  <p className="text-lg font-bold text-green-600">
-                    {(summary?.todayIncome ?? 0).toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <DollarSign className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{isAr ? "إيراد الشهر" : "This Month"}</p>
-                  <p className="text-lg font-bold text-blue-600">
-                    {(summary?.monthIncome ?? 0).toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <Receipt className="h-5 w-5 text-purple-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{isAr ? "إجمالي الإيرادات" : "Total Revenue"}</p>
-                  <p className="text-lg font-bold text-purple-600">
-                    {(summary?.totalRevenue ?? 0).toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{isAr ? "مستحق التحصيل" : "Outstanding"}</p>
-                  <p className="text-lg font-bold text-red-600">
-                    {(summary?.outstandingAmount ?? 0).toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Invoice Status Summary */}
+        {/* Filter Tabs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { key: "all", label: isAr ? "الكل" : "All", count: summary?.invoiceCounts.total ?? 0 },
-            { key: "pending", label: isAr ? "معلّقة" : "Pending", count: summary?.invoiceCounts.pending ?? 0 },
-            { key: "partial", label: isAr ? "جزئية" : "Partial", count: summary?.invoiceCounts.partial ?? 0 },
-            { key: "paid", label: isAr ? "مدفوعة" : "Paid", count: summary?.invoiceCounts.paid ?? 0 },
+            { key: "all", label: isAr ? "الكل" : "All" },
+            { key: "pending", label: isAr ? "معلّقة" : "Pending" },
+            { key: "partial", label: isAr ? "جزئية" : "Partial" },
+            { key: "paid", label: isAr ? "مدفوعة" : "Paid" },
           ].map((item) => (
             <button
               key={item.key}
@@ -338,8 +236,7 @@ export default function Finance() {
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <p className="text-2xl font-bold">{item.count}</p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-sm font-medium">{item.label}</p>
             </button>
           ))}
         </div>
@@ -347,16 +244,14 @@ export default function Finance() {
         {/* Invoice List */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="ps-9"
-                  placeholder={isAr ? "بحث عن مريض أو وصف..." : "Search patient or description..."}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+            <div className="relative">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="ps-9"
+                placeholder={isAr ? "بحث عن مريض أو وصف..." : "Search patient or description..."}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -394,7 +289,7 @@ export default function Finance() {
                     >
                       <TableCell className="font-mono text-xs text-muted-foreground">{inv.id}</TableCell>
                       <TableCell className="font-medium">{inv.patientName}</TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{inv.description}</TableCell>
+                      <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground">{inv.description}</TableCell>
                       <TableCell className="text-end font-mono">{inv.totalAmount.toLocaleString()}</TableCell>
                       <TableCell className="text-end font-mono text-green-600">{inv.paidAmount.toLocaleString()}</TableCell>
                       <TableCell className={`text-end font-mono font-semibold ${inv.remainingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
@@ -420,10 +315,10 @@ export default function Finance() {
         </Card>
       </div>
 
-      {/* Invoice Detail Dialog */}
+      {/* Invoice Detail Dialog — View + Print */}
       {selectedInvoice && (
         <Dialog open={true} onOpenChange={() => setSelectedInvoice(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-primary" />
@@ -432,33 +327,26 @@ export default function Finance() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Patient Info */}
-              <div className="rounded-lg border p-4 bg-muted/30 space-y-2">
-                <div className="flex justify-between text-sm">
+              <div className="rounded-lg border p-3 bg-muted/30 space-y-1.5 text-sm">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">{isAr ? "المريض:" : "Patient:"}</span>
                   <span className="font-semibold">{selectedInvoice.patientName}</span>
                 </div>
                 {selectedInvoice.patientPhone && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">{isAr ? "الهاتف:" : "Phone:"}</span>
                     <span>{selectedInvoice.patientPhone}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">{isAr ? "الوصف:" : "Description:"}</span>
-                  <span className="text-end max-w-xs">{selectedInvoice.description}</span>
+                  <span className="text-end max-w-[220px]">{selectedInvoice.description}</span>
                 </div>
-                {selectedInvoice.notes && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{isAr ? "ملاحظات:" : "Notes:"}</span>
-                    <span className="text-end max-w-xs">{selectedInvoice.notes}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{isAr ? "أُنشئ بواسطة:" : "Created by:"}</span>
-                  <span>{selectedInvoice.createdByName}</span>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isAr ? "التاريخ:" : "Date:"}</span>
+                  <span>{format(new Date(selectedInvoice.createdAt), "dd/MM/yyyy")}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{isAr ? "الحالة:" : "Status:"}</span>
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[selectedInvoice.status]}`}>
                     {statusLabel[selectedInvoice.status]?.[isAr ? "ar" : "en"]}
@@ -466,38 +354,32 @@ export default function Finance() {
                 </div>
               </div>
 
-              {/* Financial Summary */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg border p-3 text-center">
-                  <p className="text-xs text-muted-foreground mb-1">{isAr ? "الإجمالي" : "Total"}</p>
-                  <p className="text-xl font-bold">{selectedInvoice.totalAmount.toLocaleString()}</p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg border p-2">
+                  <p className="text-xs text-muted-foreground">{isAr ? "الإجمالي" : "Total"}</p>
+                  <p className="font-bold">{selectedInvoice.totalAmount.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">{isAr ? "د.ج" : "DZD"}</p>
                 </div>
-                <div className="rounded-lg border p-3 text-center border-green-200 bg-green-50 dark:bg-green-950/20">
-                  <p className="text-xs text-muted-foreground mb-1">{isAr ? "المدفوع" : "Paid"}</p>
-                  <p className="text-xl font-bold text-green-600">{selectedInvoice.paidAmount.toLocaleString()}</p>
+                <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-2">
+                  <p className="text-xs text-muted-foreground">{isAr ? "المدفوع" : "Paid"}</p>
+                  <p className="font-bold text-green-600">{selectedInvoice.paidAmount.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">{isAr ? "د.ج" : "DZD"}</p>
                 </div>
-                <div className={`rounded-lg border p-3 text-center ${selectedInvoice.remainingAmount > 0 ? "border-red-200 bg-red-50 dark:bg-red-950/20" : "border-green-200 bg-green-50 dark:bg-green-950/20"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">{isAr ? "المتبقي" : "Remaining"}</p>
-                  <p className={`text-xl font-bold ${selectedInvoice.remainingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
+                <div className={`rounded-lg border p-2 ${selectedInvoice.remainingAmount > 0 ? "border-red-200 bg-red-50 dark:bg-red-950/20" : "border-green-200 bg-green-50 dark:bg-green-950/20"}`}>
+                  <p className="text-xs text-muted-foreground">{isAr ? "المتبقي" : "Remaining"}</p>
+                  <p className={`font-bold ${selectedInvoice.remainingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
                     {selectedInvoice.remainingAmount.toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">{isAr ? "د.ج" : "DZD"}</p>
                 </div>
               </div>
 
-              {/* Payment History */}
-              <div>
-                <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  {isAr ? "سجل الدفعات" : "Payment History"}
-                </h3>
-                {selectedInvoice.payments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4 border rounded-lg">
-                    {isAr ? "لا توجد دفعات بعد" : "No payments yet"}
-                  </p>
-                ) : (
+              {selectedInvoice.payments.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    {isAr ? "سجل الدفعات" : "Payment History"}
+                  </h3>
                   <div className="space-y-2">
                     {selectedInvoice.payments.map((p) => (
                       <div key={p.id} className="flex items-center justify-between rounded-lg border p-3">
@@ -510,37 +392,27 @@ export default function Finance() {
                             <p className="text-xs text-muted-foreground">
                               {methodLabel[p.method]?.[isAr ? "ar" : "en"]}
                               {p.receiverName ? ` · ${p.receiverName}` : ""}
-                              {p.notes ? ` · ${p.notes}` : ""}
                             </p>
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(p.paymentDate), "dd/MM/yyyy HH:mm")}
+                          {format(new Date(p.paymentDate), "dd/MM/yyyy")}
                         </p>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
-            <Separator />
-            <DialogFooter className="flex-row gap-2 sm:justify-between">
+            <DialogFooter className="gap-2">
               <Button variant="outline" size="sm" onClick={() => printInvoice(selectedInvoice)} className="gap-2">
                 <Printer className="h-4 w-4" />
                 {isAr ? "طباعة" : "Print"}
               </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSelectedInvoice(null)}>
-                  {isAr ? "إغلاق" : "Close"}
-                </Button>
-                {selectedInvoice.status !== "paid" && selectedInvoice.status !== "cancelled" && (
-                  <Button size="sm" onClick={() => setShowPaymentDialog(true)} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    {isAr ? "تسجيل دفعة" : "Add Payment"}
-                  </Button>
-                )}
-              </div>
+              <Button variant="outline" onClick={() => setSelectedInvoice(null)}>
+                {isAr ? "إغلاق" : "Close"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -550,7 +422,10 @@ export default function Finance() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{isAr ? "إنشاء فاتورة جديدة" : "New Invoice"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              {isAr ? "إنشاء فاتورة مخصصة" : "Create Custom Invoice"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -571,15 +446,17 @@ export default function Finance() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-1.5">
               <Label>{isAr ? "وصف الخدمة / العلاج" : "Description / Treatment"}</Label>
               <Textarea
-                placeholder={isAr ? "مثال: تركيب تاج ضرس العقل..." : "e.g. Crown installation..."}
+                placeholder={isAr ? "مثال: تركيب تاج، حشو، خلع..." : "e.g. Crown, filling, extraction..."}
                 value={createForm.description}
                 onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
               />
             </div>
+
             <div className="space-y-1.5">
               <Label>{isAr ? "السعر الإجمالي (د.ج)" : "Total Price (DZD)"}</Label>
               <Input
@@ -590,6 +467,7 @@ export default function Finance() {
                 onChange={(e) => setCreateForm((f) => ({ ...f, totalAmount: e.target.value }))}
               />
             </div>
+
             <div className="space-y-1.5">
               <Label>{isAr ? "المبلغ المدفوع الآن (د.ج)" : "Amount Paid Now (DZD)"}</Label>
               <Input
@@ -600,7 +478,9 @@ export default function Finance() {
                 onChange={(e) => setCreateForm((f) => ({ ...f, paidAmount: e.target.value }))}
               />
             </div>
-            {Number(createForm.paidAmount || 0) > 0 && (
+
+            {/* طريقة الدفع — تظهر فقط لو في مبلغ مدفوع */}
+            {paidVal > 0 && (
               <div className="space-y-1.5">
                 <Label>{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
                 <Select
@@ -617,33 +497,41 @@ export default function Finance() {
                 </Select>
               </div>
             )}
-            {Number(createForm.totalAmount || 0) > 0 && (
+
+            {/* ملخص مباشر */}
+            {totalVal > 0 && (
               <div className="rounded-lg border p-3 bg-muted/40 space-y-2 text-sm">
-                {[
-                  { label: isAr ? "الإجمالي:" : "Total:", value: Number(createForm.totalAmount || 0), color: "" },
-                  { label: isAr ? "المدفوع:" : "Paid:", value: Number(createForm.paidAmount || 0), color: "text-green-600" },
-                ].map((row) => (
-                  <div key={row.label} className="flex justify-between">
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className={`font-semibold ${row.color}`}>{row.value.toLocaleString()} {isAr ? "د.ج" : "DZD"}</span>
-                  </div>
-                ))}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isAr ? "الإجمالي:" : "Total:"}</span>
+                  <span className="font-semibold">{totalVal.toLocaleString()} {isAr ? "د.ج" : "DZD"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isAr ? "المدفوع:" : "Paid:"}</span>
+                  <span className="font-semibold text-green-600">{paidVal.toLocaleString()} {isAr ? "د.ج" : "DZD"}</span>
+                </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="font-semibold">{isAr ? "المتبقي:" : "Remaining:"}</span>
-                  <span className={`font-bold text-base ${Math.max(0, Number(createForm.totalAmount || 0) - Number(createForm.paidAmount || 0)) > 0 ? "text-red-600" : "text-green-600"}`}>
-                    {Math.max(0, Number(createForm.totalAmount || 0) - Number(createForm.paidAmount || 0)).toLocaleString()} {isAr ? "د.ج" : "DZD"}
+                  <span className={`font-bold text-base ${remainingVal > 0 ? "text-red-600" : "text-green-600"}`}>
+                    {remainingVal.toLocaleString()} {isAr ? "د.ج" : "DZD"}
                   </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isAr ? "الحالة:" : "Status:"}</span>
+                  <Badge variant="outline" className={
+                    remainingVal === 0 ? "border-green-400 text-green-600" :
+                    paidVal > 0 ? "border-blue-400 text-blue-600" :
+                    "border-yellow-400 text-yellow-600"
+                  }>
+                    {remainingVal === 0
+                      ? (isAr ? "مدفوع" : "Paid")
+                      : paidVal > 0
+                      ? (isAr ? "جزئي" : "Partial")
+                      : (isAr ? "معلّق" : "Pending")}
+                  </Badge>
                 </div>
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label>{isAr ? "تاريخ الاستحقاق (اختياري)" : "Due Date (optional)"}</Label>
-              <Input
-                type="date"
-                value={createForm.dueDate}
-                onChange={(e) => setCreateForm((f) => ({ ...f, dueDate: e.target.value }))}
-              />
-            </div>
+
             <div className="space-y-1.5">
               <Label>{isAr ? "ملاحظات (اختياري)" : "Notes (optional)"}</Label>
               <Textarea
@@ -653,97 +541,23 @@ export default function Finance() {
               />
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               {isAr ? "إلغاء" : "Cancel"}
             </Button>
             <Button
               onClick={() => createMutation.mutate(createForm)}
-              disabled={!createForm.patientId || !createForm.description || !createForm.totalAmount || createMutation.isPending}
-            >
-              {createMutation.isPending ? (isAr ? "جاري الحفظ..." : "Saving...") : (isAr ? "حفظ الفاتورة" : "Save Invoice")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{isAr ? "تسجيل دفعة" : "Record Payment"}</DialogTitle>
-          </DialogHeader>
-          {selectedInvoice && (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{isAr ? "المتبقي:" : "Remaining:"}</span>
-                  <span className="font-bold text-red-600">
-                    {selectedInvoice.remainingAmount.toLocaleString()} {isAr ? "د.ج" : "DZD"}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "المبلغ المدفوع (د.ج)" : "Amount Paid (DZD)"}</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max={selectedInvoice.remainingAmount}
-                  placeholder="0"
-                  value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm((f) => ({ ...f, amount: e.target.value }))}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs h-6 px-2"
-                  onClick={() => setPaymentForm((f) => ({ ...f, amount: String(selectedInvoice.remainingAmount) }))}
-                >
-                  {isAr ? "دفع المبلغ كاملاً" : "Pay full amount"}
-                </Button>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "طريقة الدفع" : "Payment Method"}</Label>
-                <Select
-                  value={paymentForm.method}
-                  onValueChange={(v) => setPaymentForm((f) => ({ ...f, method: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">{isAr ? "نقد" : "Cash"}</SelectItem>
-                    <SelectItem value="card">{isAr ? "بطاقة" : "Card"}</SelectItem>
-                    <SelectItem value="insurance">{isAr ? "تأمين" : "Insurance"}</SelectItem>
-                    <SelectItem value="other">{isAr ? "أخرى" : "Other"}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{isAr ? "ملاحظات (اختياري)" : "Notes (optional)"}</Label>
-                <Input
-                  value={paymentForm.notes}
-                  onChange={(e) => setPaymentForm((f) => ({ ...f, notes: e.target.value }))}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
-              {isAr ? "إلغاء" : "Cancel"}
-            </Button>
-            <Button
-              onClick={() =>
-                paymentMutation.mutate({
-                  invoiceId: selectedInvoice!.id,
-                  amount: Number(paymentForm.amount),
-                  method: paymentForm.method,
-                  notes: paymentForm.notes,
-                })
+              disabled={
+                !createForm.patientId ||
+                !createForm.description ||
+                !createForm.totalAmount ||
+                createMutation.isPending
               }
-              disabled={!paymentForm.amount || Number(paymentForm.amount) <= 0 || paymentMutation.isPending}
             >
-              {paymentMutation.isPending ? (isAr ? "جاري التسجيل..." : "Saving...") : (isAr ? "تسجيل الدفعة" : "Record Payment")}
+              {createMutation.isPending
+                ? (isAr ? "جاري الحفظ..." : "Saving...")
+                : (isAr ? "حفظ الفاتورة" : "Save Invoice")}
             </Button>
           </DialogFooter>
         </DialogContent>
