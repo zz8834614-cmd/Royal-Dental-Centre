@@ -8,7 +8,7 @@ import {
   UpdateAppointmentParams,
   UpdateAppointmentBody,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../middlewares/auth";
+import { authMiddleware, requireRole } from "../middlewares/auth";
 import crypto from "crypto";
 
 function hashPassword(password: string): string {
@@ -159,6 +159,41 @@ router.get("/appointments", authMiddleware, async (req, res): Promise<void> => {
   }
 
   res.json(result);
+});
+
+router.post("/appointments/by-receptionist", authMiddleware, requireRole("receptionist", "admin"), async (req, res): Promise<void> => {
+  const { patientId, doctorId, serviceId, date, time, notes } = req.body;
+  if (!patientId || !doctorId || !serviceId || !date || !time) {
+    res.status(400).json({ error: "patientId, doctorId, serviceId, date, time are required" });
+    return;
+  }
+  const [patient] = await db.select().from(usersTable).where(eq(usersTable.id, Number(patientId)));
+  const [doctor] = await db.select().from(usersTable).where(eq(usersTable.id, Number(doctorId)));
+  const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, Number(serviceId)));
+  if (!patient || !doctor || !service) {
+    res.status(404).json({ error: "Patient, doctor or service not found" });
+    return;
+  }
+  const nextPos = (await db.select().from(appointmentsTable)
+    .where(and(eq(appointmentsTable.status, "confirmed"), eq(appointmentsTable.date, new Date(date))))
+  ).length + 1;
+  const [apt] = await db.insert(appointmentsTable).values({
+    patientId: Number(patientId),
+    doctorId: Number(doctorId),
+    serviceId: Number(serviceId),
+    date: new Date(date),
+    time,
+    notes: notes ?? null,
+    status: "confirmed",
+    queuePosition: nextPos,
+  }).returning();
+  await db.insert(notificationsTable).values({
+    userId: Number(patientId),
+    title: "تم حجز موعد لك",
+    message: `تم حجز موعدك مع الدكتور ${doctor.firstName} ${doctor.lastName} في ${date} الساعة ${time}.`,
+    type: "appointment",
+  });
+  res.status(201).json(formatAppointment(apt, patient, doctor, service));
 });
 
 router.post("/appointments", authMiddleware, async (req, res): Promise<void> => {

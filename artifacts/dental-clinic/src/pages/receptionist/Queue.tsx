@@ -8,6 +8,22 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   CheckCircle2,
   XCircle,
@@ -21,6 +37,7 @@ import {
   Stethoscope,
   CheckCheck,
   UserX,
+  PlusCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -83,6 +100,15 @@ function nextVisitStatus(current: VisitStatus): VisitStatus {
   return VISIT_CYCLE[Math.min(idx + 1, VISIT_CYCLE.length - 1)];
 }
 
+const EMPTY_FORM = {
+  patientId: "",
+  doctorId: "",
+  serviceId: "",
+  date: format(new Date(), "yyyy-MM-dd"),
+  time: "",
+  notes: "",
+};
+
 export default function ReceptionistQueue() {
   const { language } = useI18n();
   const isAr = language === "ar";
@@ -100,6 +126,16 @@ export default function ReceptionistQueue() {
   const [scheduleBlockId, setScheduleBlockId] = useState<number | null>(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
+  // Add appointment modal state
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [addLoading, setAddLoading] = useState(false);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
   useEffect(() => {
     const checkBlock = async () => {
       try {
@@ -116,6 +152,65 @@ export default function ReceptionistQueue() {
     };
     checkBlock();
   }, [today]);
+
+  // Load patients, doctors, services when modal opens
+  useEffect(() => {
+    if (!addOpen) return;
+    Promise.all([
+      apiFetch("/api/patients"),
+      apiFetch("/api/users?role=doctor"),
+      apiFetch("/api/services"),
+    ]).then(([p, d, s]) => {
+      setPatients(p ?? []);
+      setDoctors(d ?? []);
+      setServices(s ?? []);
+    }).catch(() => {});
+  }, [addOpen]);
+
+  // Load available slots when doctor + date changes
+  useEffect(() => {
+    if (!form.doctorId || !form.date) {
+      setAvailableSlots([]);
+      return;
+    }
+    setSlotsLoading(true);
+    apiFetch(`/api/appointments/available-slots?date=${form.date}&doctorId=${form.doctorId}`)
+      .then((slots: any) => {
+        setAvailableSlots(Array.isArray(slots) ? slots : []);
+        setForm(f => ({ ...f, time: "" }));
+      })
+      .catch(() => setAvailableSlots([]))
+      .finally(() => setSlotsLoading(false));
+  }, [form.doctorId, form.date]);
+
+  const handleAddAppointment = async () => {
+    if (!form.patientId || !form.doctorId || !form.serviceId || !form.date || !form.time) {
+      toast({ title: isAr ? "يرجى ملء جميع الحقول المطلوبة" : "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+    setAddLoading(true);
+    try {
+      await apiFetch("/api/appointments/by-receptionist", {
+        method: "POST",
+        body: JSON.stringify({
+          patientId: Number(form.patientId),
+          doctorId: Number(form.doctorId),
+          serviceId: Number(form.serviceId),
+          date: form.date,
+          time: form.time,
+          notes: form.notes || undefined,
+        }),
+      });
+      toast({ title: isAr ? "تم إضافة الموعد بنجاح" : "Appointment added successfully" });
+      setAddOpen(false);
+      setForm(EMPTY_FORM);
+      refetch();
+    } catch (e: any) {
+      toast({ title: e.message || (isAr ? "فشل إضافة الموعد" : "Failed to add appointment"), variant: "destructive" });
+    } finally {
+      setAddLoading(false);
+    }
+  };
 
   const toggleSchedule = async () => {
     setScheduleLoading(true);
@@ -221,7 +316,6 @@ export default function ReceptionistQueue() {
     }
   };
 
-  // Visit status quick labels for the action button
   const NEXT_LABEL: Record<VisitStatus, { en: string; ar: string; icon: React.ReactNode }> = {
     not_arrived: { en: "Mark Arrived", ar: "وصل للانتظار", icon: <Armchair className="h-3 w-3" /> },
     waiting: { en: "Start Session", ar: "ابدأ الجلسة", icon: <Stethoscope className="h-3 w-3" /> },
@@ -239,16 +333,22 @@ export default function ReceptionistQueue() {
             </h1>
             <p className="text-muted-foreground text-sm mt-1">{isAr ? `اليوم: ${today}` : `Today: ${today}`}</p>
           </div>
-          <Button
-            variant={scheduleClosed ? "destructive" : "outline"}
-            onClick={toggleSchedule}
-            disabled={scheduleLoading}
-          >
-            <CalendarOff className="h-4 w-4 me-2" />
-            {scheduleClosed
-              ? (isAr ? "فتح الجدول" : "Reopen Schedule")
-              : (isAr ? "إغلاق الجدول" : "Close Schedule")}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={() => setAddOpen(true)} className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              {isAr ? "إضافة موعد" : "Add Appointment"}
+            </Button>
+            <Button
+              variant={scheduleClosed ? "destructive" : "outline"}
+              onClick={toggleSchedule}
+              disabled={scheduleLoading}
+            >
+              <CalendarOff className="h-4 w-4 me-2" />
+              {scheduleClosed
+                ? (isAr ? "فتح الجدول" : "Reopen Schedule")
+                : (isAr ? "إغلاق الجدول" : "Close Schedule")}
+            </Button>
+          </div>
         </div>
 
         {scheduleClosed && (
@@ -481,6 +581,123 @@ export default function ReceptionistQueue() {
           </Card>
         )}
       </div>
+
+      {/* Add Appointment Dialog */}
+      <Dialog open={addOpen} onOpenChange={o => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isAr ? "إضافة موعد جديد" : "Add New Appointment"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Patient */}
+            <div className="space-y-1">
+              <Label>{isAr ? "المريض *" : "Patient *"}</Label>
+              <Select value={form.patientId} onValueChange={v => setForm(f => ({ ...f, patientId: v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isAr ? "اختر المريض" : "Select patient"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((p: any) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.firstName} {p.lastName} {p.phone ? `• ${p.phone}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Doctor */}
+            <div className="space-y-1">
+              <Label>{isAr ? "الطبيب *" : "Doctor *"}</Label>
+              <Select value={form.doctorId} onValueChange={v => setForm(f => ({ ...f, doctorId: v, time: "" }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isAr ? "اختر الطبيب" : "Select doctor"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctors.map((d: any) => (
+                    <SelectItem key={d.id} value={String(d.id)}>
+                      Dr. {d.firstName} {d.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Service */}
+            <div className="space-y-1">
+              <Label>{isAr ? "الخدمة *" : "Service *"}</Label>
+              <Select value={form.serviceId} onValueChange={v => setForm(f => ({ ...f, serviceId: v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isAr ? "اختر الخدمة" : "Select service"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((s: any) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {isAr ? (s.nameAr || s.name) : s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date */}
+            <div className="space-y-1">
+              <Label>{isAr ? "التاريخ *" : "Date *"}</Label>
+              <Input
+                type="date"
+                value={form.date}
+                min={format(new Date(), "yyyy-MM-dd")}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value, time: "" }))}
+              />
+            </div>
+
+            {/* Time */}
+            <div className="space-y-1">
+              <Label>{isAr ? "الوقت *" : "Time *"}</Label>
+              {slotsLoading ? (
+                <p className="text-sm text-muted-foreground">{isAr ? "جاري تحميل المواعيد..." : "Loading slots..."}</p>
+              ) : availableSlots.length > 0 ? (
+                <Select value={form.time} onValueChange={v => setForm(f => ({ ...f, time: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={isAr ? "اختر الوقت" : "Select time"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSlots.map(slot => (
+                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : form.doctorId && form.date ? (
+                <p className="text-sm text-muted-foreground py-1">
+                  {isAr ? "لا توجد أوقات متاحة لهذا اليوم" : "No available slots for this day"}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground py-1">
+                  {isAr ? "اختر الطبيب والتاريخ أولاً" : "Select doctor and date first"}
+                </p>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-1">
+              <Label>{isAr ? "ملاحظات" : "Notes"}</Label>
+              <Input
+                placeholder={isAr ? "ملاحظات اختيارية..." : "Optional notes..."}
+                value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setAddOpen(false); setForm(EMPTY_FORM); }}>
+              {isAr ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button onClick={handleAddAppointment} disabled={addLoading}>
+              {addLoading ? (isAr ? "جاري الإضافة..." : "Adding...") : (isAr ? "إضافة الموعد" : "Add Appointment")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={rejectTarget !== null} onOpenChange={() => setRejectTarget(null)}>
         <AlertDialogContent>
