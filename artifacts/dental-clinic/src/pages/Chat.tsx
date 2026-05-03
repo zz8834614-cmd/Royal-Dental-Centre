@@ -184,7 +184,6 @@ export default function Chat() {
   const { user } = useAuth();
   const { language } = useI18n();
   const isAr = language === "ar";
-  const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
