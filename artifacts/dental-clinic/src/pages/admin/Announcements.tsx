@@ -55,12 +55,25 @@ export default function AdminAnnouncements() {
   };
 
   const handleDelete = async (id: number) => {
+    const previous = queryClient.getQueryData<any[]>(["/api/announcements"]);
+    queryClient.setQueryData<any[]>(["/api/announcements"], (old) =>
+      (old ?? []).filter((a) => a.id !== id)
+    );
     try {
-      await deleteAnnouncement.mutateAsync({ id: String(id) });
+      const token = getStoredToken();
+      const res = await fetch(`${BASE}/api/announcements/${id}`, {
+        method: "DELETE",
+        headers: { "x-user-id": token || "" },
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${txt || res.statusText}`);
+      }
       await queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
       await refetch();
       toast({ title: t("admin.deletedSuccess") });
     } catch (e: any) {
+      queryClient.setQueryData(["/api/announcements"], previous);
       toast({ title: t("admin.error"), description: e.message, variant: "destructive" });
     }
   };

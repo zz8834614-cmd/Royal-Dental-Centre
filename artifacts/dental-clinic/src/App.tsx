@@ -50,8 +50,16 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 0,
+      gcTime: 1000 * 60 * 5,
       refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: "always",
+      refetchInterval: 8000,
+      refetchIntervalInBackground: false,
       retry: 1,
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });
